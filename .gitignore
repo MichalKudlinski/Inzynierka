@@ -1,5 +1,4 @@
 db.sqlite3
 Inzynierka\inzynierka\api\migrations
 Inzynierka\inzynierka\api\__pycache__
-frontend/node_modules
 
