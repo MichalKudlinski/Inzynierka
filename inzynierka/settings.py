@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'frontend.apps.FrontendConfig',
     'corsheaders',
     'stroje',
+    'wypozyczenia',
 ]
 
 MIDDLEWARE = [
