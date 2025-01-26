@@ -1,27 +1,31 @@
 import React, { Component } from "react";
-import ReactDOM from "react-dom/client"; // Correct import for React 18+
-import { Route, BrowserRouter as Router, Routes } from "react-router-dom"; // Import routing components
-import HomePage from "./HomePage"; // Assuming HomePage is your landing page
-import LoginPage from "./LoginPage"; // Import LoginPage
+import ReactDOM from "react-dom/client";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import HomePage from "./HomePage";
+import LoginPage from "./LoginPage";
 import { MainPageWithNavigate } from "./MainPage";
-import SignUpPage from "./SignUpPage"; // Import SignUpPage
+import SignUpPage from "./SignUpPage";
 
 export default class App extends Component {
     render() {
         return (
             <Router>
                 <Routes>
-                    <Route path="/" element={<HomePage />} /> {/* Home Page Route */}
-                    <Route path="/login" element={<LoginPage />} /> {/* Login Page Route */}
-                    <Route path="/signup" element={<SignUpPage />} /> {/* SignUp Page Route */}
-                    <Route path="/main" element={<MainPageWithNavigate />} /> {/* Main Page Route */}
-                    <Route exact path="/" element={<HomePage />} /> {/* Main Page Route */}
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/signup" element={<SignUpPage />} />
+                    <Route path="/main" element={<MainPageWithNavigate />} />
                 </Routes>
             </Router>
         );
     }
 }
 
-const appDiv = document.getElementById("app");
-const root = ReactDOM.createRoot(appDiv);  // Using createRoot in React 18+
-root.render(<App />);  // Rendering with
+const appDiv = document.getElementById("App");
+
+if (appDiv) {
+    const root = ReactDOM.createRoot(appDiv); // Only call createRoot if the element exists
+    root.render(<App />);
+} else {
+    console.error('Target container "#App" not found in the DOM.');
+}
