@@ -58,7 +58,13 @@ class StrojAdmin(admin.ModelAdmin):
     list_filter = ['gender', 'nakrycie_glowy', 'koszula', 'spodnie', 'kamizelka', 'buty', 'akcesoria', 'bizuteria', 'halka', 'sukienka']
     readonly_fields = ['extid']
 
-
+@admin.register(models.Wypozyczenie)
+class WypozyczenieAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user', 'stroj', 'element_stroju', 'wypozyczono', 'zwrot']
+    search_fields = ['user__username', 'stroj__name', 'element_stroju__name']
+    list_filter = ['user', 'stroj', 'element_stroju', 'wypozyczono', 'zwrot']
+    readonly_fields = ['id', 'wypozyczono']
+    date_hierarchy = 'wypozyczono'
 
 
 

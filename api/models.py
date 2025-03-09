@@ -123,6 +123,18 @@ class Stroj(models.Model):
     def __str__(self):
         return f"Stroj: {self.name}"
 
+class Wypozyczenie(models.Model):
+    id = models.BigAutoField(primary_key=True)
+
+    user = models.ForeignKey('User', on_delete=models.CASCADE)
+    element_stroju = models.ForeignKey('ElementStroju', on_delete=models.CASCADE, blank=True, null=True)
+    stroj = models.ForeignKey('Stroj', on_delete=models.CASCADE, blank=True, null=True)
+
+    wypozyczono = models.DateTimeField(auto_now_add=True)
+    zwrot = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Wypozyczenie: {self.id} "
 
 
 
