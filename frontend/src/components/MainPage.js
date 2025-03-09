@@ -2,6 +2,7 @@ import { Button } from '@material-ui/core';
 import React, { Component } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+
 class MainPage extends Component {
     constructor(props) {
         super(props);

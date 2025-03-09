@@ -2,17 +2,14 @@ import { Button, Grid, TextField, Typography } from "@material-ui/core/";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-
-
 const LoginPage = () => {
-    const navigate = useNavigate(); // Initialize navigate hook here
+    const navigate = useNavigate();
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
     const [csrfToken, setCsrfToken] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
-
+    
     useEffect(() => {
-        // Retrieve and set CSRF token when the component mounts
         const getCookie = (name) => {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
@@ -27,137 +24,97 @@ const LoginPage = () => {
             }
             return cookieValue;
         };
-
-        const csrfToken = getCookie('csrftoken'); // Django's default CSRF cookie name
-        setCsrfToken(csrfToken);
+        setCsrfToken(getCookie('csrftoken'));
     }, []);
 
-    // Handle input field change
     const handleInputChange = (event) => {
         const { name, value } = event.target;
-        if (name === 'name') {
-            setName(value);
-        } else if (name === 'password') {
-            setPassword(value);
-        }
+        if (name === 'name') setName(value);
+        else if (name === 'password') setPassword(value);
     };
 
-    // Handle Login button press
     const handleLoginButtonPressed = () => {
-        const requestOptions = {
+        if (!csrfToken) {
+            setErrorMessage("CSRF token not found. Please refresh the page.");
+            return;
+        }
+
+        fetch('/api/user/token/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken, // Add CSRF token to the headers
+                'X-CSRFToken': csrfToken,
             },
-            body: JSON.stringify({
-                name,
-                password,
-            }),
-        };
-
-        fetch('/api/user/token/', requestOptions)
-            .then((response) => {
-                if (!response.ok) {
-                    if (response.status === 400) {
-                        return response.json().then((data) => {
-                            throw new Error(data.error || 'Invalid login credentials'); // Display server's error message or default message
-                        });
-                    }
-                    throw new Error('Something went wrong. Please try again.');
-                }
-                return response.json();
+            body: JSON.stringify({ name, password }),
+        })
+            .then((response) => response.json().then((data) => ({ status: response.status, body: data })))
+            .then(({ status, body }) => {
+                if (status !== 200) throw new Error(body.error || 'Invalid login credentials');
+                localStorage.setItem('token', body.token);
+                navigate('/main');
             })
-            .then((data) => {
-                // Handle success: Store token in headers and navigate to /main
-                const token = data.token;
-                console.log('Login successful:', data);
-
-                // Store token for future requests
-                localStorage.setItem('token', token);
-
-                setErrorMessage(''); // Clear any previous error messages
-                navigate('/main'); // Navigate to /main
-            })
-            .catch((error) => {
-                setErrorMessage(error.message);
-                console.error('Error during login:', error);
-            });
+            .catch((error) => setErrorMessage(error.message));
     };
 
     return (
-        <Grid
-            container
-            spacing={2}
-            direction="column"
-            alignItems="center"
-            style={{ minHeight: '100vh', marginTop: '5px' }}
+        <div
+            style={{
+                display: "grid",
+                gridTemplateAreas: `
+                    'image-left form image-right'
+                    'image-left form image-right'
+                `,
+                gridTemplateColumns: "1fr 2fr 1fr",
+                height: "100vh",
+                gap: "20px",
+                padding: "10px",
+                backgroundColor: "#ffebcc", 
+                backgroundImage: "",
+                backgroundSize: "cover",
+                fontFamily: "'Lobster', cursive", 
+            }}
         >
-            <Grid item xs={12} align="center">
-                <Typography component="h4" variant="h4" style={{ marginBottom: '30px' }}>
-                    Log In
-                </Typography>
-            </Grid>
+            <div style={{ gridArea: "image-left", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <img src="" alt="Łowiczanka" style={{ maxWidth: "100%", maxHeight: "100%" }} />
+            </div>
 
-            {errorMessage && (
-                <Grid item xs={12} sm={8} md={6} lg={10} style={{ marginBottom: '20px' }}>
-                    <Typography color="error" variant="body1">
+            <div style={{ gridArea: "form", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255, 255, 255, 0.8)", padding: "30px", borderRadius: "15px", boxShadow: "0px 4px 10px rgba(0,0,0,0.2)" }}>
+                <Typography component="h4" variant="h4" style={{ marginBottom: "30px", color: "#d62828" }}>
+                    Logowanie
+                </Typography>
+                {errorMessage && (
+                    <Typography color="error" variant="body1" style={{ marginBottom: "20px" }}>
                         {errorMessage}
                     </Typography>
-                </Grid>
-            )}
-
-            <Grid item xs={12} sm={8} md={6} lg={10}>
+                )}
                 <TextField
-                    label="Name"
+                    label="Login"
                     variant="outlined"
                     fullWidth
                     name="name"
                     value={name}
                     onChange={handleInputChange}
-                    style={{ marginBottom: '20px' }}
-                    size="medium"
-                    InputProps={{
-                        style: { fontSize: '1.2rem', padding: '10px' },
-                    }}
-                    InputLabelProps={{
-                        style: { fontSize: '1.5rem' },
-                    }}
+                    style={{ marginBottom: "20px", backgroundColor: "white", borderRadius: "5px" }}
                 />
-            </Grid>
-
-            <Grid item xs={12} sm={8} md={6} lg={10}>
                 <TextField
-                    label="Password"
+                    label="Hasło"
                     variant="outlined"
                     fullWidth
                     type="password"
                     name="password"
                     value={password}
                     onChange={handleInputChange}
-                    style={{ marginBottom: '30px' }}
-                    size="medium"
-                    InputProps={{
-                        style: { fontSize: '1.2rem', padding: '10px' },
-                    }}
-                    InputLabelProps={{
-                        style: { fontSize: '1.5rem' },
-                    }}
+                    style={{ marginBottom: "30px", backgroundColor: "white", borderRadius: "5px" }}
                 />
-            </Grid>
-
-            <Grid item xs={12} sm={8} md={6} lg={10}>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    onClick={handleLoginButtonPressed}
-                    style={{ padding: '15px', fontSize: '1.2rem' }}
-                >
-                    Login
+                <Button variant="contained" style={{ backgroundColor: "#d62828", color: "white", fontSize: "1.2rem", padding: "15px", borderRadius: "10px" }} fullWidth onClick={handleLoginButtonPressed}>
+                    Zaloguj się
                 </Button>
-            </Grid>
-        </Grid>
+            </div>
+
+            <div style={{ gridArea: "image-right", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <img src="" alt="Krakowiak" style={{ maxWidth: "100%", maxHeight: "100%" }} />
+            </div>
+        </div>
     );
 };
 
