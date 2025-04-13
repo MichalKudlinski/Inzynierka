@@ -16,52 +16,80 @@ class MainPage extends Component {
   componentDidMount() {
     const token = localStorage.getItem("token");
 
-    if (token) {
-      fetch("/api/user/me", {
-        method: "GET",
-        headers: { Authorization: `Token ${token}` },
-      })
-        .then((res) => {
-          if (!res.ok) throw new Error("Failed to fetch user data");
-          return res.json();
-        })
-        .then((data) => this.setState({ user: data }))
-        .catch((err) => this.setState({ errorMessage: err.message }));
-
-      fetch("/api/user/reservations", {
-        method: "GET",
-        headers: { Authorization: `Token ${token}` },
-      })
-        .then((res) => {
-          if (!res.ok) throw new Error("Failed to fetch reservations");
-          return res.json();
-        })
-        .then((data) => this.setState({ reservations: data }))
-        .catch((err) => console.error("Error fetching reservations:", err));
-
-      fetch("/api/user/rentals", {
-        method: "GET",
-        headers: { Authorization: `Token ${token}` },
-      })
-        .then((res) => {
-          if (!res.ok) throw new Error("Failed to fetch rentals");
-          return res.json();
-        })
-        .then((data) => this.setState({ rentals: data }))
-        .catch((err) => console.error("Error fetching rentals:", err));
-    } else {
-      this.setState({ errorMessage: "No authentication token found" });
+    if (!token) {
+      this.setState({ errorMessage: "Nie znaleziono tokenu użytkownika." });
+      return;
     }
+
+    const headers = {
+      Authorization: `Token ${token}`,
+      "Content-Type": "application/json",
+    };
+
+    // Dane użytkownika
+    fetch("/api/user/me", { headers })
+      .then((res) => res.json())
+      .then((user) => this.setState({ user }))
+      .catch((err) =>
+        this.setState({ errorMessage: "Błąd pobierania użytkownika." })
+      );
+
+    // Wypożyczenia użytkownika
+    fetch("/api/wypozczenia/", { headers })
+      .then((res) => res.json())
+      .then((rentals) => this.setState({ rentals }))
+      .catch((err) => console.error("Błąd pobierania wypożyczeń:", err));
+
+    // Rezerwacje użytkownika
+    fetch("/api/stroje/", { headers })
+      .then((res) => res.json())
+      .then((reservations) => this.setState({ reservations }))
+      .catch((err) => console.error("Błąd pobierania rezerwacji:", err));
   }
 
   handleLogout = () => {
     localStorage.removeItem("token");
-    const { navigate } = this.props;
-    navigate("/");
+    this.props.navigate("/");
   };
 
+  renderList(title, items, keyName) {
+    return items.length === 0 ? (
+      <Typography variant="body1" style={{ textAlign: "center" }}>
+        Brak {title.toLowerCase()}
+      </Typography>
+    ) : (
+      items.map((item) => (
+        <Card
+          key={item.id}
+          style={{
+            width: "100%",
+            marginBottom: "10px",
+            backgroundColor: "#ffffff",
+            borderRadius: "12px",
+            boxShadow: "2px 2px 10px rgba(0,0,0,0.2)",
+          }}
+        >
+          <CardContent>
+            <Typography
+              variant="h6"
+              style={{ fontWeight: "bold", color: "#333" }}
+            >
+              {item[keyName] || "Nazwa nieznana"}
+            </Typography>
+            <Typography variant="body2" style={{ color: "#555" }}>
+              Data: {item.date || "brak"}
+            </Typography>
+            <Typography variant="body2" style={{ color: "#555" }}>
+              Status: {item.status || "nieznany"}
+            </Typography>
+          </CardContent>
+        </Card>
+      ))
+    );
+  }
+
   render() {
-    const { user, reservations, rentals, errorMessage } = this.state;
+    const { user, rentals, reservations, errorMessage } = this.state;
     const { navigate } = this.props;
 
     return (
@@ -70,89 +98,60 @@ class MainPage extends Component {
           display: "flex",
           flexDirection: "column",
           minHeight: "100vh",
-          gap: "20px",
           padding: "10px",
           backgroundColor: "#ffebcc",
-          backgroundImage: "url('XXXXXXXXXXXX')",
-          backgroundSize: "cover",
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center",
         }}
       >
         {/* Header */}
         <div
           style={{
             display: "flex",
-            alignItems: "center",
             justifyContent: "center",
             padding: "20px",
             backgroundColor: "#a52a2a",
-            border: "3px solid #d4a373",
             borderRadius: "12px",
-            color: "#ffffff",
-            fontWeight: "bold",
-            textAlign: "center",
+            color: "#fff",
+            border: "3px solid #d4a373",
           }}
         >
           <Typography variant="h4">Witaj w HeritageWear Polska!!!</Typography>
         </div>
 
-        {/* Środkowe okna :  informacji (użytnkownik | wypożyczenia | rezerwacje*/}
         <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
-            gap: "20px",
-            flex: "1",
-          }}
+          style={{ display: "flex", gap: "20px", flex: "1", marginTop: "20px" }}
         >
-          {/* Informacje*/}
+          {/* Info o użytkowniku */}
           <div
             style={{
               flex: "0 0 20%",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
               border: "3px solid #d4a373",
               borderRadius: "12px",
-              padding: "20px",
               backgroundColor: "rgba(0, 0, 0, 0.6)",
-              color: "#ffffff",
+              color: "#fff",
+              padding: "20px",
+              textAlign: "center",
             }}
           >
             {errorMessage ? (
-              <Typography color="error" variant="h6">
-                {errorMessage}
-              </Typography>
+              <Typography color="error">{errorMessage}</Typography>
             ) : user ? (
               <>
-                <Typography variant="h5" style={{ fontWeight: "bold" }}>
-                  Witaj, {user.name}!
-                </Typography>
-                <Typography variant="body1">Email: {user.email}</Typography>
+                <Typography variant="h6">Witaj, {user.name}!</Typography>
+                <Typography variant="body2">{user.email}</Typography>
               </>
             ) : (
-              <Typography variant="body1">
-                Ładowanie danych użytkownika...
-              </Typography>
+              <Typography>Ładowanie...</Typography>
             )}
 
             <Button
               variant="contained"
+              onClick={this.handleLogout}
               style={{
                 backgroundColor: "#d9534f",
-                color: "#ffffff",
+                color: "#fff",
                 marginTop: "20px",
-                fontWeight: "bold",
                 borderRadius: "12px",
-                textShadow: "2px 2px 4px rgba(0, 0, 0, 0.5)",
-                padding: "12px 24px",
               }}
-              onMouseEnter={(e) => (e.target.style.backgroundColor = "#b52b27")}
-              onMouseLeave={(e) => (e.target.style.backgroundColor = "#d9534f")}
-              onClick={this.handleLogout}
             >
               Wyloguj się
             </Button>
@@ -164,57 +163,20 @@ class MainPage extends Component {
               flex: "0 1 38%",
               border: "3px solid #d4a373",
               borderRadius: "12px",
-              padding: "20px",
               backgroundColor: "rgba(0, 0, 0, 0.6)",
-              color: "#ffffff",
-              maxHeight: "60vh",
+              color: "#fff",
+              padding: "20px",
               overflowY: "auto",
+              maxHeight: "60vh",
             }}
           >
             <Typography
               variant="h5"
-              style={{
-                fontWeight: "bold",
-                marginBottom: "10px",
-                textAlign: "center",
-              }}
+              style={{ textAlign: "center", marginBottom: "10px" }}
             >
               Twoje wypożyczenia
             </Typography>
-
-            {rentals.length === 0 ? (
-              <Typography variant="body1" style={{ textAlign: "center" }}>
-                Brak wypożyczeń
-              </Typography>
-            ) : (
-              rentals.map((rental) => (
-                <Card
-                  key={rental.id}
-                  style={{
-                    width: "100%",
-                    marginBottom: "10px",
-                    backgroundColor: "#ffffff",
-                    borderRadius: "12px",
-                    boxShadow: "2px 2px 10px rgba(0, 0, 0, 0.2)",
-                  }}
-                >
-                  <CardContent>
-                    <Typography
-                      variant="h6"
-                      style={{ fontWeight: "bold", color: "#333" }}
-                    >
-                      {rental.title}
-                    </Typography>
-                    <Typography variant="body2" style={{ color: "#555" }}>
-                      Data: {rental.date}
-                    </Typography>
-                    <Typography variant="body2" style={{ color: "#555" }}>
-                      Status: {rental.status}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              ))
-            )}
+            {this.renderList("Wypożyczenia", rentals, "title")}
           </div>
 
           {/* Rezerwacje */}
@@ -223,90 +185,50 @@ class MainPage extends Component {
               flex: "0 1 38%",
               border: "3px solid #d4a373",
               borderRadius: "12px",
-              padding: "20px",
               backgroundColor: "rgba(0, 0, 0, 0.6)",
-              color: "#ffffff",
-              maxHeight: "60vh",
+              color: "#fff",
+              padding: "20px",
               overflowY: "auto",
+              maxHeight: "60vh",
             }}
           >
             <Typography
               variant="h5"
-              style={{
-                fontWeight: "bold",
-                marginBottom: "10px",
-                textAlign: "center",
-              }}
+              style={{ textAlign: "center", marginBottom: "10px" }}
             >
               Twoje rezerwacje
             </Typography>
-
-            {reservations.length === 0 ? (
-              <Typography variant="body1" style={{ textAlign: "center" }}>
-                Brak rezerwacji
-              </Typography>
-            ) : (
-              reservations.map((reservation) => (
-                <Card
-                  key={reservation.id}
-                  style={{
-                    width: "100%",
-                    marginBottom: "10px",
-                    backgroundColor: "#ffffff",
-                    borderRadius: "12px",
-                    boxShadow: "2px 2px 10px rgba(0, 0, 0, 0.2)",
-                  }}
-                >
-                  <CardContent>
-                    <Typography
-                      variant="h6"
-                      style={{ fontWeight: "bold", color: "#333" }}
-                    >
-                      {reservation.title}
-                    </Typography>
-                    <Typography variant="body2" style={{ color: "#555" }}>
-                      Data: {reservation.date}
-                    </Typography>
-                    <Typography variant="body2" style={{ color: "#555" }}>
-                      Status: {reservation.status}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              ))
-            )}
+            {this.renderList("Rezerwacje", reservations, "title")}
           </div>
         </div>
 
-        {/* Button */}
+        {/* Przycisk */}
         <div
           style={{
             display: "flex",
             justifyContent: "flex-end",
-            paddingRight: "10px",
+            marginTop: "20px",
           }}
         >
           <Button
             variant="contained"
             style={{
               backgroundColor: "#337ab7",
-              color: "#ffffff",
+              color: "#fff",
               fontWeight: "bold",
               borderRadius: "12px",
-              textShadow: "2px 2px 4px rgba(0, 0, 0, 0.5)",
               padding: "12px 24px",
-              marginTop: "-10px",
             }}
-            onMouseEnter={(e) => (e.target.style.backgroundColor = "#23527c")}
-            onMouseLeave={(e) => (e.target.style.backgroundColor = "#337ab7")}
             onClick={() => navigate("/reservations")}
           >
             Zobacz dostępne stroje
           </Button>
         </div>
 
-        {/* Stoopka */}
+        {/* Stopka */}
         <div
           style={{
+            marginTop: "auto",
             border: "3px solid #d4a373",
             borderRadius: "12px",
             padding: "15px",
