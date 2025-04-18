@@ -6,8 +6,7 @@ const ClothingInfoPage = () => {
     const [clothingItem, setClothingItem] = useState(null);
     const [errorMessage, setErrorMessage] = useState('');
     const navigate = useNavigate();
-    const { id } = useParams(); // get clothing item ID from route param (e.g., /clothing/1)
-
+    const { id } = useParams();
     useEffect(() => {
         const token = localStorage.getItem('token');
 

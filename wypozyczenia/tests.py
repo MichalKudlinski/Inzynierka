@@ -35,6 +35,10 @@ class WypozyczenieApiTests(TestCase):
 
     def test_create_wypozyczenie_with_stroj(self):
         """Test creating a wypozyczenie with a stroj"""
+
+
+
+
         payload = {
             'user': self.user.id,
             'stroj': self.stroj.id,
