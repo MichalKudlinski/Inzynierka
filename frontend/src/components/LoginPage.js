@@ -1,4 +1,4 @@
-import { Button, Grid, TextField, Typography } from "@material-ui/core/";
+import { Button, TextField, Typography } from "@material-ui/core";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -8,7 +8,7 @@ const LoginPage = () => {
     const [password, setPassword] = useState('');
     const [csrfToken, setCsrfToken] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
-    
+
     useEffect(() => {
         const getCookie = (name) => {
             let cookieValue = null;
@@ -68,10 +68,10 @@ const LoginPage = () => {
                 height: "100vh",
                 gap: "20px",
                 padding: "10px",
-                backgroundColor: "#ffebcc", 
+                backgroundColor: "#ffebcc",
                 backgroundImage: "",
                 backgroundSize: "cover",
-                fontFamily: "'Lobster', cursive", 
+                fontFamily: "'Lobster', cursive",
             }}
         >
             <div style={{ gridArea: "image-left", display: "flex", alignItems: "center", justifyContent: "center" }}>

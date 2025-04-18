@@ -1,5 +1,6 @@
 from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
                                         PermissionsMixin)
+from django.core.mail import send_mail
 from django.db import models
 
 """
@@ -10,19 +11,22 @@ Klasy w bazie danych
 
 class UserManager(BaseUserManager):
 
-    def create_user(self, name, password=None, **extra_field):
+    def create_user(self, email, name, password=None, **extra_field):
         """Tworzenie uzytkownika"""
         if not name:
             raise ValueError("User must have a name")
-        user = self.model(name=name, **extra_field)
+        if not email:
+            raise ValueError("The email field is required.")
+        email = self.normalize_email(email)
+        user = self.model(email=email, name=name, **extra_field)
         user.set_password(password)
         user.save(using=self._db)
 
         return user
 
-    def create_superuser(self, name, password):
+    def create_superuser(self, name, password,email):
         """Tworzenie uzytkownika jako Admin"""
-        user = self.create_user(name, password)
+        user = self.create_user(name, password,email)
         user.is_staff = True
         user.is_superuser = True
         user.save(using=self._db)
@@ -33,14 +37,15 @@ class UserManager(BaseUserManager):
 
 # Klasa Uzytkownik
 class User(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(max_length=255)
+    email = models.EmailField(max_length=255, unique=True, null=False, blank=False)
     name = models.CharField(max_length=255, unique = True)
     is_active = models.BooleanField(default = True)
     is_staff = models.BooleanField(default = False)
 
-    object = UserManager()
+    objects = UserManager()
 
     USERNAME_FIELD = 'name'
+    REQUIRED_FIELDS = ['email']
 
 
 
@@ -83,6 +88,17 @@ class ElementStroju(models.Model):
 
     def __str__(self):
         return f"{self.name}"
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        if is_new:
+            send_mail(
+                subject="Potwierdzenie Utworzenia Elementu Stroju",
+                message=f"Element stroju '{self.name}' został pomyślnie utworzony.",
+                from_email="noreply@example.com",
+                recipient_list=[self.user.email],
+            )
 
 
 class Stroj(models.Model):
@@ -132,12 +148,40 @@ class Wypozyczenie(models.Model):
 
     wypozyczono = models.DateTimeField(auto_now_add=True)
     zwrot = models.DateTimeField(blank=True, null=True)
+    rezerwacja = models.BooleanField(default=False)  # Czy rezerwacja
 
     def __str__(self):
         return f"Wypozyczenie: {self.id} "
 
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        if is_new:
+            send_mail(
+                subject="Potwierdzenie Wypożyczenia",
+                message=f"Wypożyczenie o ID {self.id} zostało pomyślnie utworzone.",
+                from_email="heritagewearpoland@outlook.com",
+                recipient_list=[self.user.email],
+            )
 
 
+class Image(models.Model):
+    name = models.CharField(max_length=255)
+    image = models.ImageField(upload_to='uploads/images/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.image.name
+
+    def image_url(self):
+        return self.image.url
 
 
+class Wiadomosci(models.Model):
+    name = models.CharField(max_length=100)
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.created_at.strftime('%Y-%m-%d %H:%M')})"
 

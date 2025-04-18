@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import ReactDOM from "react-dom/client";
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import ClothingInfoPage from "./ClothingInfoPage";
 import HomePage from "./HomePage";
 import LoginPage from "./LoginPage";
 import { MainPageWithNavigate } from "./MainPage";
@@ -15,6 +16,7 @@ export default class App extends Component {
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/signup" element={<SignUpPage />} />
                     <Route path="/main" element={<MainPageWithNavigate />} />
+                    <Route path="/clothing" element={<ClothingInfoPage />} />
                 </Routes>
             </Router>
         );

@@ -11,11 +11,20 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ['email', 'password', 'name']
-        extra_kwargs = {'password': {'write_only': True, 'min_length': 5 }}
+        extra_kwargs = {
+            'password': {'write_only': True, 'min_length': 5},
+            'email': {'required': True}, 
+        }
 
+    def validate_email(self, value):
+        """Check if the email is unique."""
+        if get_user_model().objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
+    
     def create(self, validated_data):
         """Tworzenie Usera"""
-        return get_user_model().object.create_user(**validated_data)
+        return get_user_model().objects.create_user(**validated_data)
 
     def update(self, instance, validated_data):
         """Update usera"""

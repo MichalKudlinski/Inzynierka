@@ -1,5 +1,3 @@
-import Button from "@material-ui/core/Button";
-import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import React from "react";
 import { useNavigate } from "react-router-dom";
@@ -55,7 +53,7 @@ const HomePage = () => {
           }}
         >
           <img
-            src="XXXXXXXXXXXX"
+            src="/media/uploads/images/car2.png"
             alt="Logo aplikacji"
             style={{ maxWidth: "100%", maxHeight: "100%" }}
           />
@@ -98,7 +96,7 @@ const HomePage = () => {
         }}
       >
         <img
-          src="GORAL"
+          src="/media/uploads/images/g%C3%B3ral.webp"
           alt="Góral"
           style={{ width: "70%", height: "70%", objectFit: "contain" }}
         />

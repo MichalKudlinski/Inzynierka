@@ -1,4 +1,4 @@
-import { Button, TextField, Typography } from "@material-ui/core/";
+import { Button, TextField, Typography } from "@material-ui/core";
 import React, { Component } from "react";
 
 export default class SignUpPage extends Component {
