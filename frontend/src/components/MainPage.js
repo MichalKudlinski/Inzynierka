@@ -1,4 +1,4 @@
-import { Button, Typography, Card, CardContent } from "@material-ui/core";
+import { Button, Card, CardContent, Typography } from "@material-ui/core";
 import React, { Component } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -7,238 +7,313 @@ class MainPage extends Component {
     super(props);
     this.state = {
       user: null,
+      rentals: [],
       reservations: [],
+      stroje: [],
+      elementStroje: [],
       errorMessage: "",
+      allOwnedStroje: [],
+      allOwnedElementStroje: [],
     };
   }
 
   componentDidMount() {
     const token = localStorage.getItem("token");
+    if (!token) {
+      this.setState({ errorMessage: "Nie znaleziono tokenu użytkownika." });
+      return;
+    }
 
-    if (token) {
-      // Fetch user data
-      fetch("/api/user/me", {
-        method: "GET",
-        headers: { Authorization: `Token ${token}` },
-      })
-        .then((response) => {
-          if (!response.ok) throw new Error("Failed to fetch user data");
-          return response.json();
-        })
-        .then((data) => this.setState({ user: data }))
-        .catch((error) => this.setState({ errorMessage: error.message }));
+    const headers = {
+      Authorization: `Token ${token}`,
+      "Content-Type": "application/json",
+    };
 
-      // Fetch reservations
-      fetch("/api/user/reservations", {
-        method: "GET",
-        headers: { Authorization: `Token ${token}` },
+    fetch("/api/user/me", { headers })
+      .then((res) => res.json())
+      .then((user) => {
+        if (!user || !user.id) {
+          this.setState({ errorMessage: "User data is incomplete." });
+          return;
+        }
+        this.setState({ user });
+
+        if (user.is_renter) {
+          this.fetchRenterData(headers);
+        } else {
+          this.fetchNonRenterData(headers, user.id);
+        }
       })
-        .then((response) => {
-          if (!response.ok) throw new Error("Failed to fetch reservations");
-          return response.json();
-        })
-        .then((data) => this.setState({ reservations: data }))
-        .catch((error) => console.error("Error fetching reservations:", error));
-    } else {
-      this.setState({ errorMessage: "No authentication token found" });
+      .catch(() => {
+        this.setState({ errorMessage: "Błąd pobierania użytkownika." });
+      });
+  }
+
+  async fetchRenterData(headers) {
+    try {
+      const [strojeRes, elementStrojeRes] = await Promise.all([
+        fetch("/api/stroje/stroj/list", { headers }),
+        fetch("/api/stroje/element/list", { headers }),
+      ]);
+
+      const [stroje, elementStroje] = await Promise.all([
+        strojeRes.json(),
+        elementStrojeRes.json(),
+      ]);
+
+      this.setState({ stroje, elementStroje });
+
+      const wypozyczeniaRes = await fetch("/api/wypozczenia/wypozyczenie/list", { headers });
+      const allWypozyczenia = await wypozyczeniaRes.json();
+
+      const filtered = allWypozyczenia.filter((wypozyczenie) => {
+        const strojObj = stroje.find((s) => s.id === wypozyczenie.stroj);
+        const elementStrojObj = elementStroje.find((e) => e.id === wypozyczenie.element_stroju);
+        return (strojObj?.user === this.state.user.id || elementStrojObj?.user === this.state.user.id);
+      });
+
+      const wypozyczenia = filtered.reduce(
+        (acc, wypozyczenie) => {
+          if (wypozyczenie.rezerwacja) acc.reservations.push(wypozyczenie);
+          else acc.rentals.push(wypozyczenie);
+          return acc;
+        },
+        { rentals: [], reservations: [] }
+      );
+
+      this.setState({
+        rentals: wypozyczenia.rentals,
+        reservations: wypozyczenia.reservations,
+        allOwnedStroje: stroje.filter((s) => s.user === this.state.user.id),
+        allOwnedElementStroje: elementStroje.filter((e) => e.user === this.state.user.id),
+      });
+    } catch {
+      this.setState({ errorMessage: "Błąd pobierania danych wynajmującego." });
+    }
+  }
+
+  async fetchNonRenterData(headers, userId) {
+    try {
+      const [strojeRes, elementStrojeRes] = await Promise.all([
+        fetch("/api/stroje/stroj/list", { headers }),
+        fetch("/api/stroje/element/list", { headers }),
+      ]);
+
+      const [stroje, elementStroje] = await Promise.all([
+        strojeRes.json(),
+        elementStrojeRes.json(),
+      ]);
+
+      const wypozyczeniaRes = await fetch("/api/wypozczenia/wypozyczenie/list", { headers });
+      const wypozyczenia = await wypozyczeniaRes.json();
+
+      const filteredWypozyczenia = wypozyczenia.filter((wypozyczenie) => {
+        const isDirectUser = wypozyczenie.user === userId;
+
+        const strojUser = typeof wypozyczenie.stroj === "object"
+          ? wypozyczenie.stroj?.user
+          : stroje.find((s) => s.id === wypozyczenie.stroj)?.user;
+
+        const elementStrojUser = typeof wypozyczenie.element_stroju === "object"
+          ? wypozyczenie.element_stroju?.user
+          : elementStroje.find((e) => e.id === wypozyczenie.element_stroju)?.user;
+
+        return isDirectUser || strojUser === userId || elementStrojUser === userId;
+      });
+
+      const splitWypozyczenia = filteredWypozyczenia.reduce(
+        (acc, wypozyczenie) => {
+          if (wypozyczenie.rezerwacja) acc.reservations.push(wypozyczenie);
+          else acc.rentals.push(wypozyczenie);
+          return acc;
+        },
+        { rentals: [], reservations: [] }
+      );
+
+      this.setState({
+        stroje,
+        elementStroje,
+        rentals: splitWypozyczenia.rentals,
+        reservations: splitWypozyczenia.reservations,
+      });
+    } catch {
+      this.setState({ errorMessage: "Błąd pobierania danych osoby wynajmującej." });
     }
   }
 
   handleLogout = () => {
     localStorage.removeItem("token");
-    const { navigate } = this.props;
-    navigate("/");
+    this.props.navigate("/");
   };
 
+  renderList(title, items, stroje, elementStroje) {
+    const formatDate = (dateString) => {
+      if (!dateString) return "brak";
+      const date = new Date(dateString);
+      return date.toLocaleDateString("pl-PL", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    };
+
+    return items.length === 0 ? (
+      <Typography variant="body1" style={{ textAlign: "center" }}>
+        Brak {title.toLowerCase()}
+      </Typography>
+    ) : (
+      items.map((item) => {
+        const name = (() => {
+          if (item.stroj) {
+            return typeof item.stroj === "object"
+              ? item.stroj.name
+              : stroje.find((s) => s.id === item.stroj)?.name || "Strój nieznany";
+          }
+          if (item.element_stroju) {
+            return typeof item.element_stroju === "object"
+              ? item.element_stroju.name
+              : elementStroje.find((e) => e.id === item.element_stroju)?.name || "Element stroju nieznany";
+          }
+          return "Nieznany przedmiot";
+        })();
+
+        return (
+          <Card key={item.id} style={{ marginBottom: "15px", backgroundColor: "#f8f9fa", borderRadius: "8px" }}>
+            <CardContent>
+              <Typography variant="h6">{name}</Typography>
+              <Typography variant="body2">Wypożyczenie: {formatDate(item.wypozyczono)}</Typography>
+              <Typography variant="body2">Zwrot: {formatDate(item.zwrot)}</Typography>
+            </CardContent>
+          </Card>
+        );
+      })
+    );
+  }
+
+  renderOwnedItems(title, items) {
+    return items.length === 0 ? (
+      <Typography variant="body1" style={{ textAlign: "center" }}>
+        Brak {title.toLowerCase()}
+      </Typography>
+    ) : (
+      items.map((item) => (
+        <Card key={item.id} style={{ marginBottom: "15px", backgroundColor: "#e6ffe6", borderRadius: "8px" }}>
+          <CardContent>
+            <Typography variant="h6">{item.name}</Typography>
+          </CardContent>
+        </Card>
+      ))
+    );
+  }
+
   render() {
-    const { user, reservations, errorMessage } = this.state;
+    const { user, rentals, reservations, stroje, elementStroje, errorMessage } = this.state;
     const { navigate } = this.props;
 
     return (
-      <div
-        style={{
-          display: "grid",
-          gridTemplateAreas: `
-            'header header'
-            'info reservations'
-            'footer footer'
-          `,
-          gridTemplateColumns: "2fr 1fr",
-          gridTemplateRows: "auto 1fr auto",
-          height: "100vh",
-          gap: "20px",
-          padding: "10px",
-          backgroundColor: "#ffebcc",
-          backgroundImage: "url('XXXXXXXXXXXX')",
-          backgroundSize: "cover",
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center",
-        }}
-      >
+      <div style={{ height: "100vh", overflowY: "auto", padding: "10px", backgroundColor: "#ffebcc" }}>
         {/* Header */}
-        <div
-          style={{
-            gridArea: "header",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px",
-            backgroundColor: "#a52a2a",
-            border: "3px solid #d4a373",
-            borderRadius: "12px",
-            color: "#ffffff",
-            fontWeight: "bold",
-            textAlign: "center",
-          }}
-        >
-          <Typography variant="h4">Witaj w HeritageWear Polska</Typography>
+        <div style={{
+          display: "flex",
+          justifyContent: "center",
+          padding: "20px",
+          backgroundColor: "#a52a2a",
+          borderRadius: "12px",
+          color: "#fff",
+          border: "3px solid #d4a373",
+        }}>
+          <Typography variant="h4">Witaj w HeritageWear Polska!!!</Typography>
         </div>
 
         {/* User Info */}
-        <div
-          style={{
-            gridArea: "info",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            border: "3px solid #d4a373",
-            borderRadius: "12px",
-            padding: "20px",
-            backgroundColor: "rgba(0, 0, 0, 0.6)",
-            color: "#ffffff",
-          }}
-        >
+        <div style={{
+          border: "3px solid #d4a373",
+          borderRadius: "12px",
+          backgroundColor: "rgba(0, 0, 0, 0.6)",
+          color: "#fff",
+          padding: "20px",
+          textAlign: "center",
+          marginTop: "20px",
+        }}>
           {errorMessage ? (
-            <Typography color="error" variant="h6">
-              {errorMessage}
-            </Typography>
+            <Typography color="error">{errorMessage}</Typography>
           ) : user ? (
             <>
-              <Typography variant="h5" style={{ fontWeight: "bold" }}>
-                Witaj, {user.name}!
-              </Typography>
-              <Typography variant="body1">Email: {user.email}</Typography>
+              <Typography variant="h6">Witaj, {user.name}!</Typography>
+              <Typography variant="body2">{user.email}</Typography>
             </>
           ) : (
-            <Typography variant="body1">Ładowanie danych użytkownika...</Typography>
+            <Typography>Ładowanie...</Typography>
           )}
-
           <Button
             variant="contained"
+            onClick={this.handleLogout}
             style={{
               backgroundColor: "#d9534f",
-              color: "#ffffff",
+              color: "#fff",
               marginTop: "20px",
-              fontWeight: "bold",
               borderRadius: "12px",
-              textShadow: "2px 2px 4px rgba(0, 0, 0, 0.5)",
-              padding: "12px 24px",
-              transition: "background-color 0.3s ease",
             }}
-            onMouseEnter={(e) => (e.target.style.backgroundColor = "#b52b27")}
-            onMouseLeave={(e) => (e.target.style.backgroundColor = "#d9534f")}
-            onClick={this.handleLogout}
           >
             Wyloguj się
           </Button>
         </div>
 
-        {/* Reservations Container */}
-        <div
-          style={{
-            gridArea: "reservations",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "flex-start",
-            border: "3px solid #d4a373",
-            borderRadius: "12px",
-            padding: "20px",
-            backgroundColor: "rgba(0, 0, 0, 0.6)",
-            color: "#ffffff",
-            maxHeight: "60vh",
-            overflowY: "auto",
-          }}
-        >
-          <Typography variant="h5" style={{ fontWeight: "bold", marginBottom: "10px" }}>
-            Twoje rezerwacje
-          </Typography>
+        {/* Main Lists */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", marginTop: "20px" }}>
+          <div style={{ flex: "1 1 48%", border: "3px solid #d4a373", borderRadius: "12px", backgroundColor: "rgba(0, 0, 0, 0.6)", color: "#fff", padding: "20px" }}>
+            <Typography variant="h5" style={{ textAlign: "center", marginBottom: "10px" }}>
+              {user?.is_renter ? "Wypożyczenia Twoich przedmiotów" : "Twoje wypożyczenia"}
+            </Typography>
+            {this.renderList("Wypożyczenia", rentals, stroje, elementStroje)}
+          </div>
 
-          {reservations.length === 0 ? (
-            <Typography variant="body1">Brak rezerwacji</Typography>
-          ) : (
-            reservations.map((reservation) => (
-              <Card
-                key={reservation.id}
-                style={{
-                  width: "90%",
-                  marginBottom: "10px",
-                  backgroundColor: "#ffffff",
-                  borderRadius: "12px",
-                  boxShadow: "2px 2px 10px rgba(0, 0, 0, 0.2)",
-                }}
-              >
-                <CardContent>
-                  <Typography variant="h6" style={{ fontWeight: "bold", color: "#333" }}>
-                    {reservation.title}
-                  </Typography>
-                  <Typography variant="body2" style={{ color: "#555" }}>
-                    Data: {reservation.date}
-                  </Typography>
-                  <Typography variant="body2" style={{ color: "#555" }}>
-                    Status: {reservation.status}
-                  </Typography>
-                </CardContent>
-              </Card>
-            ))
-          )}
-
-          {/* Button to navigate to Reservation Page */}
-          <Button
-            variant="contained"
-            style={{
-              backgroundColor: "#337ab7",
-              color: "#ffffff",
-              marginTop: "20px",
-              fontWeight: "bold",
-              borderRadius: "12px",
-              textShadow: "2px 2px 4px rgba(0, 0, 0, 0.5)",
-              padding: "12px 24px",
-              transition: "background-color 0.3s ease",
-            }}
-            onMouseEnter={(e) => (e.target.style.backgroundColor = "#23527c")}
-            onMouseLeave={(e) => (e.target.style.backgroundColor = "#337ab7")}
-            onClick={() => navigate("/reservations")}
-          >
-            Zobacz wszystkie rezerwacje
-          </Button>
+          <div style={{ flex: "1 1 48%", border: "3px solid #d4a373", borderRadius: "12px", backgroundColor: "rgba(0, 0, 0, 0.6)", color: "#fff", padding: "20px" }}>
+            <Typography variant="h5" style={{ textAlign: "center", marginBottom: "10px" }}>
+              {user?.is_renter ? "Rezerwacje Twoich przedmiotów" : "Twoje rezerwacje"}
+            </Typography>
+            {this.renderList("Rezerwacje", reservations, stroje, elementStroje)}
+          </div>
         </div>
 
-        {/* Footer */}
-        <div
-          style={{
-            gridArea: "footer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            border: "3px solid #d4a373",
-            borderRadius: "12px",
-            padding: "15px",
-            textAlign: "center",
-            fontSize: "1rem",
-            backgroundColor: "rgba(0, 0, 0, 0.6)",
-            color: "#ffffff",
-          }}
-        >
-          <p>Kontakt: kontakt@heritagewear.pl | Tel: +48 123 456 789</p>
-        </div>
+        {/* Renter-only: Owned Items */}
+        {user?.is_renter && (
+          <div style={{ marginTop: "30px" }}>
+            <Typography variant="h5" style={{ textAlign: "center" }}>Twoje stroje</Typography>
+            {this.renderOwnedItems("stroje", this.state.allOwnedStroje)}
+
+            <Typography variant="h5" style={{ textAlign: "center", marginTop: "20px" }}>Twoje elementy stroju</Typography>
+            {this.renderOwnedItems("elementy stroju", this.state.allOwnedElementStroje)}
+          </div>
+        )}
+
+        {/* Non-renter: Button */}
+        {!user?.is_renter && (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
+            <Button
+              variant="contained"
+              style={{
+                backgroundColor: "#337ab7",
+                color: "#fff",
+                fontWeight: "bold",
+                borderRadius: "12px",
+                padding: "12px 20px",
+              }}
+              onClick={() => navigate("/reservations")}
+            >
+              Przeglądaj dostępne stroje
+            </Button>
+          </div>
+        )}
       </div>
     );
   }
 }
 
-export const MainPageWithNavigate = (props) => {
+const MainPageWithNavigation = () => {
   const navigate = useNavigate();
-  return <MainPage {...props} navigate={navigate} />;
+  return <MainPage navigate={navigate} />;
 };
+
+export default MainPageWithNavigation;

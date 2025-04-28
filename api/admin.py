@@ -13,7 +13,7 @@ class UserAdmin(BaseUserAdmin):
     ordering = ['id']
     list_display = ['id', 'name', 'email']
     fieldsets = (
-        (None, {'fields': ('email', 'password')}),
+        (None, {'fields': ('email', 'password', 'phone_number')}),
         (
             _('Permissions'),
             {
@@ -21,6 +21,7 @@ class UserAdmin(BaseUserAdmin):
                     'is_active',
                     'is_staff',
                     'is_superuser',
+                    'is_renter',
                 )
             }
         ),
@@ -38,6 +39,7 @@ class UserAdmin(BaseUserAdmin):
                 'is_active',
                 'is_staff',
                 'is_superuser',
+                'is_renter',
             )
         }),
     )
@@ -46,15 +48,15 @@ admin.site.register(models.User, UserAdmin)
 
 @admin.register(models.ElementStroju)
 class ElementStrojuAdmin(admin.ModelAdmin):
-    list_display = ['id', 'extid','name', 'element_type', 'gender']
-    search_fields = ['name', 'element_type', 'gender']
+    list_display = ['id', 'extid','name', 'size', 'user', 'city','element_type', 'gender']
+    search_fields = ['name', 'element_type', 'gender','image']
     list_filter = ['element_type', 'gender']
 
 @admin.register(models.Stroj)
 class StrojAdmin(admin.ModelAdmin):
-    list_display = ['id', 'extid', 'name', 'gender',
+    list_display = ['id', 'extid', 'name','city', 'gender', 'user',
                     'nakrycie_glowy', 'koszula', 'spodnie', 'kamizelka',
-                    'buty', 'akcesoria', 'bizuteria', 'halka', 'sukienka']
+                    'buty', 'akcesoria', 'bizuteria', 'halka', 'sukienka','image']
     search_fields = ['name', 'gender']
     list_filter = ['gender', 'nakrycie_glowy', 'koszula', 'spodnie', 'kamizelka', 'buty', 'akcesoria', 'bizuteria', 'halka', 'sukienka']
     readonly_fields = ['extid']

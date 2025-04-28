@@ -1,4 +1,4 @@
-import { Button, TextField, Typography } from "@material-ui/core";
+import { Button, Checkbox, FormControlLabel, Snackbar, TextField, Typography } from "@material-ui/core";
 import React, { Component } from "react";
 
 export default class SignUpPage extends Component {
@@ -8,8 +8,10 @@ export default class SignUpPage extends Component {
       email: "",
       password: "",
       name: "",
+      isRenter: false,  // New state for checkbox
       csrfToken: "",
       errorMessage: "",
+      successMessage: false, // To handle Snackbar visibility
     };
   }
 
@@ -37,15 +39,19 @@ export default class SignUpPage extends Component {
     this.setState({ [name]: value });
   };
 
+  handleCheckboxChange = (event) => {
+    this.setState({ isRenter: event.target.checked });
+  };
+
   handleSignUpButtonPressed = () => {
-    const { email, password, name, csrfToken } = this.state;
+    const { email, password, name, csrfToken, isRenter } = this.state;
     const requestOptions = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": csrfToken,
       },
-      body: JSON.stringify({ email, password, name }),
+      body: JSON.stringify({ email, password, name, is_renter: isRenter }), // Add is_renter here
     };
 
     fetch("/api/user/create/", requestOptions)
@@ -59,7 +65,12 @@ export default class SignUpPage extends Component {
       })
       .then((data) => {
         console.log("User created successfully:", data);
-        this.setState({ errorMessage: "" });
+        this.setState({ errorMessage: "", successMessage: true }); // Show success message
+
+        // Hide the success message after 3 seconds and redirect to login page
+        setTimeout(() => {
+          window.location.href = "/login"; // Change this URL to the correct login page URL
+        }, 3000); // 3 seconds
       })
       .catch((error) => {
         this.setState({ errorMessage: error.message });
@@ -67,15 +78,16 @@ export default class SignUpPage extends Component {
       });
   };
 
+  handleCloseSnackbar = () => {
+    this.setState({ successMessage: false });
+  };
+
   render() {
     return (
       <div
         style={{
           display: "grid",
-          gridTemplateAreas: `
-                        'image-left form image-right'
-                        'image-left form image-right'
-                    `,
+          gridTemplateAreas: ` 'image-left form image-right' 'image-left form image-right' `,
           gridTemplateColumns: "1fr 2fr 1fr",
           height: "100vh",
           gap: "20px",
@@ -131,7 +143,7 @@ export default class SignUpPage extends Component {
             </Typography>
           )}
           <TextField
-            label="Imię"
+            label="Nazwa Użytkownika"
             variant="outlined"
             fullWidth
             name="name"
@@ -157,6 +169,17 @@ export default class SignUpPage extends Component {
             value={this.state.password}
             onChange={this.handleInputChange}
             style={{ marginBottom: "30px" }}
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={this.state.isRenter}
+                onChange={this.handleCheckboxChange}
+                name="isRenter"
+                color="primary"
+              />
+            }
+            label="Chcę zostać wynajmującym"
           />
           <Button
             variant="contained"
@@ -187,6 +210,14 @@ export default class SignUpPage extends Component {
             style={{ maxWidth: "100%", maxHeight: "100%" }}
           />
         </div>
+
+        {/* Snackbar for success message */}
+        <Snackbar
+          open={this.state.successMessage}
+          autoHideDuration={3000}
+          onClose={this.handleCloseSnackbar}
+          message="Użytkownik zarejestrowany pomyślnie!"
+        />
       </div>
     );
   }

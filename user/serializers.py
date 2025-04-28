@@ -10,10 +10,10 @@ class UserSerializer(serializers.ModelSerializer):
     """Serializer dla Usera"""
     class Meta:
         model = get_user_model()
-        fields = ['email', 'password', 'name']
+        fields = ['id','email', 'password', 'name','is_renter']
         extra_kwargs = {
             'password': {'write_only': True, 'min_length': 5},
-            'email': {'required': True}, 
+            'email': {'required': True},
         }
 
     def validate_email(self, value):
@@ -21,7 +21,7 @@ class UserSerializer(serializers.ModelSerializer):
         if get_user_model().objects.filter(email=value).exists():
             raise serializers.ValidationError("A user with this email already exists.")
         return value
-    
+
     def create(self, validated_data):
         """Tworzenie Usera"""
         return get_user_model().objects.create_user(**validated_data)

@@ -1,4 +1,4 @@
-import { Button, TextField, Typography } from "@material-ui/core";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography } from "@material-ui/core";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -8,6 +8,9 @@ const LoginPage = () => {
     const [password, setPassword] = useState('');
     const [csrfToken, setCsrfToken] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [dialogMessage, setDialogMessage] = useState('');
+    const [email, setEmail] = useState('');
+    const [openDialog, setOpenDialog] = useState(false);
 
     useEffect(() => {
         const getCookie = (name) => {
@@ -31,9 +34,36 @@ const LoginPage = () => {
         const { name, value } = event.target;
         if (name === 'name') setName(value);
         else if (name === 'password') setPassword(value);
+        else if (name === 'email') setEmail(value);
     };
 
-    const handleLoginButtonPressed = () => {
+    const handleForgotPassword = () => {
+        if (!email) {
+            setDialogMessage("Proszę podać email.");
+            return;
+        }
+
+        fetch('/api/user/reset-password/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify({ email }),
+        })
+            .then((response) => response.json().then((data) => ({ status: response.status, body: data })))
+            .then(({ status, body }) => {
+                if (status !== 200) throw new Error(body.error || 'Reset failed');
+                setDialogMessage("Nowe hasło zostało wysłane na Twój email.");
+            })
+            .catch((error) => {
+                setDialogMessage(error.message || "Wystąpił błąd.");
+            });
+    };
+
+    const handleLoginButtonPressed = (event) => {
+        event.preventDefault();
+
         if (!csrfToken) {
             setErrorMessage("CSRF token not found. Please refresh the page.");
             return;
@@ -56,6 +86,12 @@ const LoginPage = () => {
             .catch((error) => setErrorMessage(error.message));
     };
 
+    const handleDialogClose = () => {
+        setOpenDialog(false);
+        setEmail('');
+        setDialogMessage('');
+    };
+
     return (
         <div
             style={{
@@ -69,8 +105,6 @@ const LoginPage = () => {
                 gap: "20px",
                 padding: "10px",
                 backgroundColor: "#ffebcc",
-                backgroundImage: "",
-                backgroundSize: "cover",
                 fontFamily: "'Lobster', cursive",
             }}
         >
@@ -78,42 +112,115 @@ const LoginPage = () => {
                 <img src="" alt="Łowiczanka" style={{ maxWidth: "100%", maxHeight: "100%" }} />
             </div>
 
-            <div style={{ gridArea: "form", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255, 255, 255, 0.8)", padding: "30px", borderRadius: "15px", boxShadow: "0px 4px 10px rgba(0,0,0,0.2)" }}>
+            <div
+                style={{
+                    gridArea: "form",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "rgba(255, 255, 255, 0.8)",
+                    padding: "30px",
+                    borderRadius: "15px",
+                    boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
+                }}
+            >
                 <Typography component="h4" variant="h4" style={{ marginBottom: "30px", color: "#d62828" }}>
                     Logowanie
                 </Typography>
+
                 {errorMessage && (
                     <Typography color="error" variant="body1" style={{ marginBottom: "20px" }}>
                         {errorMessage}
                     </Typography>
                 )}
-                <TextField
-                    label="Login"
-                    variant="outlined"
-                    fullWidth
-                    name="name"
-                    value={name}
-                    onChange={handleInputChange}
-                    style={{ marginBottom: "20px", backgroundColor: "white", borderRadius: "5px" }}
-                />
-                <TextField
-                    label="Hasło"
-                    variant="outlined"
-                    fullWidth
-                    type="password"
-                    name="password"
-                    value={password}
-                    onChange={handleInputChange}
-                    style={{ marginBottom: "30px", backgroundColor: "white", borderRadius: "5px" }}
-                />
-                <Button variant="contained" style={{ backgroundColor: "#d62828", color: "white", fontSize: "1.2rem", padding: "15px", borderRadius: "10px" }} fullWidth onClick={handleLoginButtonPressed}>
-                    Zaloguj się
-                </Button>
+
+                <form onSubmit={handleLoginButtonPressed} style={{ width: '100%' }}>
+                    <TextField
+                        label="Login"
+                        variant="outlined"
+                        fullWidth
+                        name="name"
+                        value={name}
+                        onChange={handleInputChange}
+                        style={{ marginBottom: "20px", backgroundColor: "white", borderRadius: "5px" }}
+                    />
+                    <TextField
+                        label="Hasło"
+                        variant="outlined"
+                        fullWidth
+                        type="password"
+                        name="password"
+                        value={password}
+                        onChange={handleInputChange}
+                        style={{ marginBottom: "30px", backgroundColor: "white", borderRadius: "5px" }}
+                    />
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        style={{
+                            backgroundColor: "#d62828",
+                            color: "white",
+                            fontSize: "1.2rem",
+                            padding: "15px",
+                            borderRadius: "10px",
+                        }}
+                        fullWidth
+                    >
+                        Zaloguj się
+                    </Button>
+
+                    <Button
+                        variant="text"
+                        color="primary"
+                        style={{
+                            fontSize: "1rem",
+                            textTransform: "none",
+                            marginTop: "10px"
+                        }}
+                        fullWidth
+                        onClick={() => setOpenDialog(true)}
+                    >
+                        Zapomniałem hasła
+                    </Button>
+                </form>
             </div>
 
             <div style={{ gridArea: "image-right", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <img src="" alt="Krakowiak" style={{ maxWidth: "100%", maxHeight: "100%" }} />
             </div>
+
+            {/* Dialog */}
+            <Dialog open={openDialog} onClose={handleDialogClose}>
+                <DialogTitle>Resetowanie hasła</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        name="email"
+                        label="Email"
+                        type="email"
+                        fullWidth
+                        variant="outlined"
+                        value={email}
+                        onChange={handleInputChange}
+                        style={{ marginBottom: "10px" }}
+                    />
+                    {dialogMessage && (
+                        <Typography variant="body2" style={{ color: dialogMessage.includes('wysłane') ? 'green' : 'red' }}>
+                            {dialogMessage}
+                        </Typography>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleDialogClose} color="primary">
+                        Zamknij
+                    </Button>
+                    <Button onClick={handleForgotPassword} color="primary">
+                        Wyślij nowe hasło
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </div>
     );
 };

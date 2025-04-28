@@ -1,11 +1,13 @@
 import React, { Component } from "react";
 import ReactDOM from "react-dom/client";
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
-import ClothingInfoPage from "./ClothingInfoPage";
+import DetailPage from "./DetailPage";
 import HomePage from "./HomePage";
 import LoginPage from "./LoginPage";
-import { MainPageWithNavigate } from "./MainPage";
+import MainPageWithNavigate from "./MainPage";
+import ReservationPage from "./ReservationPage";
 import SignUpPage from "./SignUpPage";
+;
 
 export default class App extends Component {
     render() {
@@ -16,7 +18,8 @@ export default class App extends Component {
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/signup" element={<SignUpPage />} />
                     <Route path="/main" element={<MainPageWithNavigate />} />
-                    <Route path="/clothing" element={<ClothingInfoPage />} />
+                    <Route path="/reservations" element={<ReservationPage />} />
+                    <Route path="/details/:type/:id" element={<DetailPage />} />
                 </Routes>
             </Router>
         );
@@ -26,7 +29,7 @@ export default class App extends Component {
 const appDiv = document.getElementById("App");
 
 if (appDiv) {
-    const root = ReactDOM.createRoot(appDiv); // Only call createRoot if the element exists
+    const root = ReactDOM.createRoot(appDiv);
     root.render(<App />);
 } else {
     console.error('Target container "#App" not found in the DOM.');

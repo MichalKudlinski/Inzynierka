@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'stroje',
     'wypozyczenia',
     'wiadomosci',
+    'django_cron',
 ]
 
 MIDDLEWARE = [
@@ -140,7 +141,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR,'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'api.User'
-
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000/*']
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
@@ -153,15 +154,10 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 # EMAIL REAL
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.office365.com'
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'heritagewearpoland@outlook.com'  #do podmiany
-EMAIL_HOST_PASSWORD = 'heritage12#' #do podmiany
+EMAIL_HOST_USER = 'kudlinski.test@gmail.com'
+EMAIL_HOST_PASSWORD = 'nfyd teqf hmlk wfec'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-# Use in-memory email backend for tests
-if 'test' in sys.argv:
-    EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
-
-#dummy email to development
-EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'

@@ -1,15 +1,18 @@
 from datetime import datetime, timedelta
 
-from api.models import ElementStroju, Stroj, Wypozyczenie
 from django.contrib.auth.models import User
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+
+from api.models import ElementStroju, Stroj, Wypozyczenie
 
 
 class WypozyczenieSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wypozyczenie
-        fields = '__all__'
-
+        fields = ['id','user','stroj_nazwa', 'stroj','element_stroju','wypozyczono','zwrot','rezerwacja']
+        read_only_fields = ['user']
+    stroj_nazwa = serializers.CharField(source='stroj.nazwa', read_only=True)
     rezerwacja = serializers.BooleanField(required=False)
 
     def validate(self, data):
@@ -19,33 +22,24 @@ class WypozyczenieSerializer(serializers.ModelSerializer):
         stroj = data.get('stroj')
         rezerwacja = data.get('rezerwacja', False)
         current_time = datetime.now()
+        zwrot = data.get('zwrot')
+        if zwrot:
+            if isinstance(zwrot, str):  # If zwrot is a string, parse it
+                try:
+                    data['zwrot'] = datetime.fromisoformat(zwrot)
+                except ValueError:
+                    raise ValidationError("Invalid date format for zwrot, should be ISO format.")
+            elif isinstance(zwrot, datetime):  # If zwrot is already a datetime object, no need to parse
+                data['zwrot'] = zwrot
+            else:
+                raise ValidationError("zwrot must be a string or datetime object.")
 
-        if stroj:
-            active_wypozyczenia = Wypozyczenie.objects.filter(stroj=stroj, rezerwacja=False)
-            for wypozyczenie in active_wypozyczenia:
-                if current_time < wypozyczenie.zwrot:
-                    raise serializers.ValidationError(f"The stroj '{stroj}' is currently unavailable for rent.")
 
-        if element_stroju:
-            active_wypozyczenia = Wypozyczenie.objects.filter(element_stroju=element_stroju, rezerwacja=False)
-            for wypozyczenie in active_wypozyczenia:
-                if current_time < wypozyczenie.zwrot:
-                    raise serializers.ValidationError(f"The element stroju '{element_stroju}' is currently unavailable for rent.")
-
-        # Additional validation for reservations
-        if rezerwacja:
-            if stroj and Wypozyczenie.objects.filter(stroj=stroj, rezerwacja=True).exists():
-                raise serializers.ValidationError(f"The stroj '{stroj}' already has an active reservation.")
-            if element_stroju and Wypozyczenie.objects.filter(element_stroju=element_stroju, rezerwacja=True).exists():
-                raise serializers.ValidationError(f"The element stroju '{element_stroju}' already has an active reservation.")
 
         return data
 
     def create(self, validated_data):
         rezerwacja = validated_data.get('rezerwacja', False)
-        if rezerwacja:
-            # Set a default reservation period (e.g., 7 days from now)
-            validated_data['zwrot'] = datetime.now() + timedelta(days=7)
         return super().create(validated_data)
 
     def update(self, instance, validated_data):

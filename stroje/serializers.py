@@ -1,12 +1,13 @@
-from api.models import ElementStroju, Stroj
 from rest_framework import serializers
+
+from api.models import ElementStroju, Stroj
 
 
 class ElementStrojuSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ElementStroju
-        fields = ['id', 'name', 'description', 'gender', 'element_type', 'extid']
+        fields = ['id', 'name', 'user','description', 'gender', 'size', 'element_type', 'extid']
 
     def validate_gender(self, value):
         valid_genders = [choice[0] for choice in ElementStroju.GENDERS]
@@ -53,7 +54,7 @@ class ElementStrojuSerializer(serializers.ModelSerializer):
 class StrojSerializer(serializers.ModelSerializer):
     class Meta:
         model = Stroj
-        fields = ['id', 'extid', 'name', 'description', 'gender',
+        fields = ['id', 'extid', 'name', 'description','city','size','user','gender',
                   'nakrycie_glowy', 'koszula', 'spodnie', 'kamizelka',
                   'buty', 'akcesoria', 'bizuteria', 'halka', 'sukienka']
 

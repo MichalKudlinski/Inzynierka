@@ -1,9 +1,35 @@
 import Typography from "@material-ui/core/Typography";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const [wiadomosci, setWiadomosci] = useState([]);
+
+  useEffect(() => {
+    const fetchWiadomosci = async () => {
+      try {
+        const res = await fetch("/api/wiadomosci/wiadomosci");
+        if (!res.ok) throw new Error("Błąd podczas pobierania wiadomości");
+        const data = await res.json();
+
+        const now = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(now.getDate() - 30);
+
+        const recentMessages = data.filter((msg) => {
+          const created = new Date(msg.created_at);
+          return created >= thirtyDaysAgo && created <= now;
+        });
+
+        setWiadomosci(recentMessages);
+      } catch (error) {
+        console.error("❌ Błąd ładowania wiadomości:", error);
+      }
+    };
+
+    fetchWiadomosci();
+  }, []);
 
   return (
     <div
@@ -109,7 +135,17 @@ const HomePage = () => {
         }}
       >
         <h2>Informacje z Polskiego Folku</h2>
-        <p>Tu znajdziesz ciekawe informacje o polskim folklorze...</p>
+        {wiadomosci.length > 0 ? (
+          <ul style={{ marginTop: "10px", paddingLeft: "20px", textAlign: "left" }}>
+            {wiadomosci.map((msg) => (
+              <li key={msg.id}>
+                <strong>{msg.name}</strong> — {msg.text}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p style={{ fontStyle: "italic", marginTop: "10px" }}>Brak wiadomości z ostatnich 30 dni.</p>
+        )}
       </div>
 
       <div
