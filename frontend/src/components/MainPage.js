@@ -63,13 +63,21 @@ class MainPage extends Component {
 
       this.setState({ stroje, elementStroje });
 
-      const wypozyczeniaRes = await fetch("/api/wypozczenia/wypozyczenie/list", { headers });
+      const wypozyczeniaRes = await fetch(
+        "/api/wypozczenia/wypozyczenie/list",
+        { headers }
+      );
       const allWypozyczenia = await wypozyczeniaRes.json();
 
       const filtered = allWypozyczenia.filter((wypozyczenie) => {
         const strojObj = stroje.find((s) => s.id === wypozyczenie.stroj);
-        const elementStrojObj = elementStroje.find((e) => e.id === wypozyczenie.element_stroju);
-        return (strojObj?.user === this.state.user.id || elementStrojObj?.user === this.state.user.id);
+        const elementStrojObj = elementStroje.find(
+          (e) => e.id === wypozyczenie.element_stroju
+        );
+        return (
+          strojObj?.user === this.state.user.id ||
+          elementStrojObj?.user === this.state.user.id
+        );
       });
 
       const wypozyczenia = filtered.reduce(
@@ -85,7 +93,9 @@ class MainPage extends Component {
         rentals: wypozyczenia.rentals,
         reservations: wypozyczenia.reservations,
         allOwnedStroje: stroje.filter((s) => s.user === this.state.user.id),
-        allOwnedElementStroje: elementStroje.filter((e) => e.user === this.state.user.id),
+        allOwnedElementStroje: elementStroje.filter(
+          (e) => e.user === this.state.user.id
+        ),
       });
     } catch {
       this.setState({ errorMessage: "Błąd pobierania danych wynajmującego." });
@@ -104,21 +114,29 @@ class MainPage extends Component {
         elementStrojeRes.json(),
       ]);
 
-      const wypozyczeniaRes = await fetch("/api/wypozczenia/wypozyczenie/list", { headers });
+      const wypozyczeniaRes = await fetch(
+        "/api/wypozczenia/wypozyczenie/list",
+        { headers }
+      );
       const wypozyczenia = await wypozyczeniaRes.json();
 
       const filteredWypozyczenia = wypozyczenia.filter((wypozyczenie) => {
         const isDirectUser = wypozyczenie.user === userId;
 
-        const strojUser = typeof wypozyczenie.stroj === "object"
-          ? wypozyczenie.stroj?.user
-          : stroje.find((s) => s.id === wypozyczenie.stroj)?.user;
+        const strojUser =
+          typeof wypozyczenie.stroj === "object"
+            ? wypozyczenie.stroj?.user
+            : stroje.find((s) => s.id === wypozyczenie.stroj)?.user;
 
-        const elementStrojUser = typeof wypozyczenie.element_stroju === "object"
-          ? wypozyczenie.element_stroju?.user
-          : elementStroje.find((e) => e.id === wypozyczenie.element_stroju)?.user;
+        const elementStrojUser =
+          typeof wypozyczenie.element_stroju === "object"
+            ? wypozyczenie.element_stroju?.user
+            : elementStroje.find((e) => e.id === wypozyczenie.element_stroju)
+                ?.user;
 
-        return isDirectUser || strojUser === userId || elementStrojUser === userId;
+        return (
+          isDirectUser || strojUser === userId || elementStrojUser === userId
+        );
       });
 
       const splitWypozyczenia = filteredWypozyczenia.reduce(
@@ -137,7 +155,9 @@ class MainPage extends Component {
         reservations: splitWypozyczenia.reservations,
       });
     } catch {
-      this.setState({ errorMessage: "Błąd pobierania danych osoby wynajmującej." });
+      this.setState({
+        errorMessage: "Błąd pobierania danych osoby wynajmującej.",
+      });
     }
   }
 
@@ -168,22 +188,35 @@ class MainPage extends Component {
           if (item.stroj) {
             return typeof item.stroj === "object"
               ? item.stroj.name
-              : stroje.find((s) => s.id === item.stroj)?.name || "Strój nieznany";
+              : stroje.find((s) => s.id === item.stroj)?.name ||
+                  "Strój nieznany";
           }
           if (item.element_stroju) {
             return typeof item.element_stroju === "object"
               ? item.element_stroju.name
-              : elementStroje.find((e) => e.id === item.element_stroju)?.name || "Element stroju nieznany";
+              : elementStroje.find((e) => e.id === item.element_stroju)?.name ||
+                  "Element stroju nieznany";
           }
           return "Nieznany przedmiot";
         })();
 
         return (
-          <Card key={item.id} style={{ marginBottom: "15px", backgroundColor: "#f8f9fa", borderRadius: "8px" }}>
+          <Card
+            key={item.id}
+            style={{
+              marginBottom: "15px",
+              backgroundColor: "#f8f9fa",
+              borderRadius: "8px",
+            }}
+          >
             <CardContent>
               <Typography variant="h6">{name}</Typography>
-              <Typography variant="body2">Wypożyczenie: {formatDate(item.wypozyczono)}</Typography>
-              <Typography variant="body2">Zwrot: {formatDate(item.zwrot)}</Typography>
+              <Typography variant="body2">
+                Wypożyczenie: {formatDate(item.wypozyczono)}
+              </Typography>
+              <Typography variant="body2">
+                Zwrot: {formatDate(item.zwrot)}
+              </Typography>
             </CardContent>
           </Card>
         );
@@ -198,7 +231,14 @@ class MainPage extends Component {
       </Typography>
     ) : (
       items.map((item) => (
-        <Card key={item.id} style={{ marginBottom: "15px", backgroundColor: "#e6ffe6", borderRadius: "8px" }}>
+        <Card
+          key={item.id}
+          style={{
+            marginBottom: "15px",
+            backgroundColor: "#e6ffe6",
+            borderRadius: "8px",
+          }}
+        >
           <CardContent>
             <Typography variant="h6">{item.name}</Typography>
           </CardContent>
@@ -208,34 +248,46 @@ class MainPage extends Component {
   }
 
   render() {
-    const { user, rentals, reservations, stroje, elementStroje, errorMessage } = this.state;
+    const { user, rentals, reservations, stroje, elementStroje, errorMessage } =
+      this.state;
     const { navigate } = this.props;
 
     return (
-      <div style={{ height: "100vh", overflowY: "auto", padding: "10px", backgroundColor: "#ffebcc" }}>
+      <div
+        style={{
+          height: "100vh",
+          overflowY: "auto",
+          padding: "10px",
+          backgroundColor: "#ffebcc",
+        }}
+      >
         {/* Header */}
-        <div style={{
-          display: "flex",
-          justifyContent: "center",
-          padding: "20px",
-          backgroundColor: "#a52a2a",
-          borderRadius: "12px",
-          color: "#fff",
-          border: "3px solid #d4a373",
-        }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            padding: "20px",
+            backgroundColor: "#a52a2a",
+            borderRadius: "12px",
+            color: "#fff",
+            border: "3px solid #d4a373",
+          }}
+        >
           <Typography variant="h4">Witaj w HeritageWear Polska!!!</Typography>
         </div>
 
         {/* User Info */}
-        <div style={{
-          border: "3px solid #d4a373",
-          borderRadius: "12px",
-          backgroundColor: "rgba(0, 0, 0, 0.6)",
-          color: "#fff",
-          padding: "20px",
-          textAlign: "center",
-          marginTop: "20px",
-        }}>
+        <div
+          style={{
+            border: "3px solid #d4a373",
+            borderRadius: "12px",
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            color: "#fff",
+            padding: "20px",
+            textAlign: "center",
+            marginTop: "20px",
+          }}
+        >
           {errorMessage ? (
             <Typography color="error">{errorMessage}</Typography>
           ) : user ? (
@@ -261,17 +313,52 @@ class MainPage extends Component {
         </div>
 
         {/* Main Lists */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", marginTop: "20px" }}>
-          <div style={{ flex: "1 1 48%", border: "3px solid #d4a373", borderRadius: "12px", backgroundColor: "rgba(0, 0, 0, 0.6)", color: "#fff", padding: "20px" }}>
-            <Typography variant="h5" style={{ textAlign: "center", marginBottom: "10px" }}>
-              {user?.is_renter ? "Wypożyczenia Twoich przedmiotów" : "Twoje wypożyczenia"}
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "20px",
+            marginTop: "20px",
+          }}
+        >
+          <div
+            style={{
+              flex: "1 1 48%",
+              border: "3px solid #d4a373",
+              borderRadius: "12px",
+              backgroundColor: "rgba(0, 0, 0, 0.6)",
+              color: "#fff",
+              padding: "20px",
+            }}
+          >
+            <Typography
+              variant="h5"
+              style={{ textAlign: "center", marginBottom: "10px" }}
+            >
+              {user?.is_renter
+                ? "Wypożyczenia Twoich przedmiotów"
+                : "Twoje wypożyczenia"}
             </Typography>
             {this.renderList("Wypożyczenia", rentals, stroje, elementStroje)}
           </div>
 
-          <div style={{ flex: "1 1 48%", border: "3px solid #d4a373", borderRadius: "12px", backgroundColor: "rgba(0, 0, 0, 0.6)", color: "#fff", padding: "20px" }}>
-            <Typography variant="h5" style={{ textAlign: "center", marginBottom: "10px" }}>
-              {user?.is_renter ? "Rezerwacje Twoich przedmiotów" : "Twoje rezerwacje"}
+          <div
+            style={{
+              flex: "1 1 48%",
+              border: "3px solid #d4a373",
+              borderRadius: "12px",
+              backgroundColor: "rgba(0, 0, 0, 0.6)",
+              color: "#fff",
+              padding: "20px",
+            }}
+          >
+            <Typography
+              variant="h5"
+              style={{ textAlign: "center", marginBottom: "10px" }}
+            >
+              {user?.is_renter
+                ? "Rezerwacje Twoich przedmiotów"
+                : "Twoje rezerwacje"}
             </Typography>
             {this.renderList("Rezerwacje", reservations, stroje, elementStroje)}
           </div>
@@ -280,17 +367,33 @@ class MainPage extends Component {
         {/* Renter-only: Owned Items */}
         {user?.is_renter && (
           <div style={{ marginTop: "30px" }}>
-            <Typography variant="h5" style={{ textAlign: "center" }}>Twoje stroje</Typography>
+            <Typography variant="h5" style={{ textAlign: "center" }}>
+              Twoje stroje
+            </Typography>
             {this.renderOwnedItems("stroje", this.state.allOwnedStroje)}
 
-            <Typography variant="h5" style={{ textAlign: "center", marginTop: "20px" }}>Twoje elementy stroju</Typography>
-            {this.renderOwnedItems("elementy stroju", this.state.allOwnedElementStroje)}
+            <Typography
+              variant="h5"
+              style={{ textAlign: "center", marginTop: "20px" }}
+            >
+              Twoje elementy stroju
+            </Typography>
+            {this.renderOwnedItems(
+              "elementy stroju",
+              this.state.allOwnedElementStroje
+            )}
           </div>
         )}
 
         {/* Non-renter: Button */}
         {!user?.is_renter && (
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              marginTop: "20px",
+            }}
+          >
             <Button
               variant="contained"
               style={{
