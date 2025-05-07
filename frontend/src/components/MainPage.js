@@ -259,13 +259,15 @@ class MainPage extends Component {
           overflowY: "auto",
           padding: "10px",
           backgroundColor: "#ffebcc",
+          margin: "0 auto",
         }}
       >
-        {/* Header */}
+        {/* Header with logo */}
         <div
           style={{
             display: "flex",
-            justifyContent: "center",
+            justifyContent: "space-between",
+            alignItems: "center",
             padding: "20px",
             backgroundColor: "#a52a2a",
             borderRadius: "12px",
@@ -273,10 +275,12 @@ class MainPage extends Component {
             border: "3px solid #d4a373",
           }}
         >
-          <Typography variant="h4">Witaj w HeritageWear Polska!!!</Typography>
+          <Typography variant="h4" style={{ flexGrow: 1, textAlign: "center" }}>
+            Witaj na stronie głównej użytkownika!
+          </Typography>
         </div>
 
-        {/* User Info */}
+        {/* User info and logout */}
         <div
           style={{
             border: "3px solid #d4a373",
@@ -312,18 +316,17 @@ class MainPage extends Component {
           </Button>
         </div>
 
-        {/* Main Lists */}
+        {/* Rental and reservation sections */}
         <div
           style={{
-            display: "flex",
-            flexWrap: "wrap",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
             gap: "20px",
             marginTop: "20px",
           }}
         >
           <div
             style={{
-              flex: "1 1 48%",
               border: "3px solid #d4a373",
               borderRadius: "12px",
               backgroundColor: "rgba(0, 0, 0, 0.6)",
@@ -331,10 +334,7 @@ class MainPage extends Component {
               padding: "20px",
             }}
           >
-            <Typography
-              variant="h5"
-              style={{ textAlign: "center", marginBottom: "10px" }}
-            >
+            <Typography variant="h5" style={{ textAlign: "center", marginBottom: "10px" }}>
               {user?.is_renter
                 ? "Wypożyczenia Twoich przedmiotów"
                 : "Twoje wypożyczenia"}
@@ -344,7 +344,6 @@ class MainPage extends Component {
 
           <div
             style={{
-              flex: "1 1 48%",
               border: "3px solid #d4a373",
               borderRadius: "12px",
               backgroundColor: "rgba(0, 0, 0, 0.6)",
@@ -352,10 +351,7 @@ class MainPage extends Component {
               padding: "20px",
             }}
           >
-            <Typography
-              variant="h5"
-              style={{ textAlign: "center", marginBottom: "10px" }}
-            >
+            <Typography variant="h5" style={{ textAlign: "center", marginBottom: "10px" }}>
               {user?.is_renter
                 ? "Rezerwacje Twoich przedmiotów"
                 : "Twoje rezerwacje"}
@@ -364,7 +360,7 @@ class MainPage extends Component {
           </div>
         </div>
 
-        {/* Renter-only: Owned Items */}
+        {/* Owned items for renters */}
         {user?.is_renter && (
           <div style={{ marginTop: "30px" }}>
             <Typography variant="h5" style={{ textAlign: "center" }}>
@@ -385,23 +381,24 @@ class MainPage extends Component {
           </div>
         )}
 
-        {/* Non-renter: Button */}
+        {/* Browse button for regular users */}
         {!user?.is_renter && (
           <div
             style={{
               display: "flex",
-              justifyContent: "flex-end",
-              marginTop: "20px",
+              justifyContent: "center",
+              marginTop: "40px",
             }}
           >
             <Button
-              variant="contained"
-              style={{
-                backgroundColor: "#337ab7",
-                color: "#fff",
-                fontWeight: "bold",
-                borderRadius: "12px",
-                padding: "12px 20px",
+             variant="contained"
+             style={{
+               backgroundColor: "#337ab7",
+               color: "#fff",
+               fontWeight: "bold",
+               borderRadius: "12px",
+               padding: "14px 24px",
+               fontSize: "16px",
               }}
               onClick={() => navigate("/reservations")}
             >

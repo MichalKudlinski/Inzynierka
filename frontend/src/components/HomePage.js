@@ -46,7 +46,6 @@ const HomePage = () => {
         gap: "20px",
         padding: "10px",
         backgroundColor: "#ffebcc",
-        backgroundImage: "url('XXXXXXXXXXXX')",
         backgroundSize: "cover",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
@@ -79,7 +78,7 @@ const HomePage = () => {
           }}
         >
           <img
-            src="/media/uploads/images/car2.png"
+            src="/media\uploads\images\Logo_heritagewear.webp"
             alt="Logo aplikacji"
             style={{ maxWidth: "100%", maxHeight: "100%" }}
           />
@@ -92,24 +91,31 @@ const HomePage = () => {
         </Typography>
       </div>
 
-      <div
-        style={{
-          gridArea: "signup",
-          ...buttonStyle("#d9534f", "#b52b27"),
-        }}
-        onClick={() => navigate("/signup")}
-      >
-        Stwórz konto
+      <div style={{     
+      gridArea: "signup",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      }}>
+        <HoverButton
+          text="Załóż konto"
+          bgColor="#d9534f"
+          hoverColor="#b52b27"
+          onClick={() => navigate("/signup")}
+        />
       </div>
 
-      <div
-        style={{
-          gridArea: "login",
-          ...buttonStyle("#337ab7", "#23527c"),
-        }}
-        onClick={() => navigate("/login")}
-      >
-        Zaloguj
+      <div style={{ 
+      gridArea: "login",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center", }}>
+        <HoverButton
+          text="Zaloguj"
+          bgColor="#337ab7"
+          hoverColor="#23527c"
+          onClick={() => navigate("/login")}
+        />
       </div>
 
       <div
@@ -122,8 +128,8 @@ const HomePage = () => {
         }}
       >
         <img
-          src="/media/uploads/images/g%C3%B3ral.webp"
-          alt="Góral"
+          src="/media\uploads\images\Kwiaty_folk.webp"
+          alt="Kwiaty"
           style={{ width: "70%", height: "70%", objectFit: "contain" }}
         />
       </div>
@@ -160,26 +166,39 @@ const HomePage = () => {
   );
 };
 
-const buttonStyle = (bgColor, hoverColor) => ({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  border: "2px solid #d4a373",
-  borderRadius: "12px",
-  padding: "12px",
-  cursor: "pointer",
-  fontSize: "1rem",
-  fontWeight: "bold",
-  color: "#ffffff",
-  backgroundColor: bgColor,
-  transition: "background-color 0.3s ease",
-  textShadow: "2px 2px 4px rgba(0, 0, 0, 0.5)",
-  width: "80%",
-  height: "50px",
-  textAlign: "center",
-  margin: "auto",
-  ':hover': { backgroundColor: hoverColor }
-});
+
+const HoverButton = ({ text, bgColor, hoverColor, onClick }) => {
+  const [hover, setHover] = useState(false);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        border: "2px solid #d4a373",
+        borderRadius: "12px",
+        padding: "12px",
+        cursor: "pointer",
+        fontSize: "1rem",
+        fontWeight: "bold",
+        color: "#ffffff",
+        backgroundColor: hover ? hoverColor : bgColor,
+        transition: "background-color 0.3s ease",
+        textShadow: "2px 2px 4px rgba(0, 0, 0, 0.5)",
+        width: "80%",
+        height: "50px",
+        textAlign: "center",
+        margin: "auto",
+      }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onClick={onClick}
+    >
+      {text}
+    </div>
+  );
+};
 
 const infoBoxStyle = {
   display: "flex",

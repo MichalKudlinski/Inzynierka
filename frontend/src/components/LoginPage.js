@@ -109,7 +109,7 @@ const LoginPage = () => {
             }}
         >
             <div style={{ gridArea: "image-left", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <img src="" alt="Łowiczanka" style={{ maxWidth: "100%", maxHeight: "100%" }} />
+                <img src="/media\uploads\images\Krakowiak.webp" alt="Krakowiak" style={{ maxWidth: "100%", maxHeight: "100%" }} />
             </div>
 
             <div
@@ -171,23 +171,30 @@ const LoginPage = () => {
                     </Button>
 
                     <Button
-                        variant="text"
+                        variant="outlined"
                         color="primary"
                         style={{
-                            fontSize: "1rem",
-                            textTransform: "none",
-                            marginTop: "10px"
-                        }}
-                        fullWidth
-                        onClick={() => setOpenDialog(true)}
-                    >
-                        Zapomniałem hasła
-                    </Button>
+                        fontSize: "1rem",
+                        textTransform: "none",
+                        marginTop: "10px",
+                        padding: "10px 20px",
+                        borderRadius: "25px", 
+                        transition: "all 0.3s ease", 
+                        border: "2px solid #1976d2", 
+                        color: "white",
+                        backgroundColor: "#1976d2"
+                    }}
+                    fullWidth
+                    onClick={() => setOpenDialog(true)}
+
+                >
+                    Zapomniałem hasła
+                      </Button>
                 </form>
             </div>
 
             <div style={{ gridArea: "image-right", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <img src="" alt="Krakowiak" style={{ maxWidth: "100%", maxHeight: "100%" }} />
+                <img src="/media\uploads\images\Krakowianka.webp" alt="Krakowianka" style={{ maxWidth: "100%", maxHeight: "100%" }} />
             </div>
 
             {/* Dialog */}
@@ -213,13 +220,44 @@ const LoginPage = () => {
                     )}
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleDialogClose} color="primary">
-                        Zamknij
-                    </Button>
-                    <Button onClick={handleForgotPassword} color="primary">
-                        Wyślij nowe hasło
-                    </Button>
-                </DialogActions>
+  <Button
+    onClick={handleDialogClose}
+    variant="contained"
+    style={{
+      backgroundColor: "#d9534f",
+      color: "#fff",
+      fontWeight: "bold",
+      borderRadius: "8px",
+      textTransform: "none",
+      padding: "8px 16px",
+      boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+      transition: "background-color 0.3s",
+    }}
+    onMouseOver={(e) => (e.target.style.backgroundColor = "#c9302c")}
+    onMouseOut={(e) => (e.target.style.backgroundColor = "#d9534f")}
+  >
+    Zamknij
+  </Button>
+
+  <Button
+    onClick={handleForgotPassword}
+    variant="contained"
+    style={{
+      backgroundColor: "#337ab7",
+      color: "#fff",
+      fontWeight: "bold",
+      borderRadius: "8px",
+      textTransform: "none",
+      padding: "8px 16px",
+      boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+      transition: "background-color 0.3s",
+    }}
+    onMouseOver={(e) => (e.target.style.backgroundColor = "#23527c")}
+    onMouseOut={(e) => (e.target.style.backgroundColor = "#337ab7")}
+  >
+    Wyślij nowe hasło
+  </Button>
+</DialogActions>
             </Dialog>
         </div>
     );

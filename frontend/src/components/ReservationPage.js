@@ -139,15 +139,14 @@ class ReservationPage extends Component {
             }}
           >
             <img
-              src="/media/uploads/images/car2.png"
+              src="media\uploads\images\Logo_heritagewear.webp"
               alt="Logo aplikacji"
               style={{ maxWidth: "100%", maxHeight: "100%" }}
             />
           </div>
           <Typography
             variant="h5"
-            style={{ color: "#ffffff", fontWeight: "bold", textAlign: "left" }}
-          >
+            style={{ color: "#ffffff", fontWeight: "bold", textAlign: "left"}}>
             HeritageWear Polska
           </Typography>
         </div>

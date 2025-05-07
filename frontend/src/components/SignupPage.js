@@ -93,7 +93,6 @@ export default class SignUpPage extends Component {
           gap: "20px",
           padding: "10px",
           backgroundColor: "#fbeec1",
-          backgroundImage: "url('/path-to-folk-pattern.png')",
           backgroundSize: "cover",
           fontFamily: "'Lobster', cursive",
         }}
@@ -107,7 +106,7 @@ export default class SignUpPage extends Component {
           }}
         >
           <img
-            src="/path-to-left-folk-character.png"
+            src="/media\uploads\images\lowiczanka.webp"
             alt="Postać ludowa"
             style={{ maxWidth: "100%", maxHeight: "100%" }}
           />
@@ -204,9 +203,9 @@ export default class SignUpPage extends Component {
             justifyContent: "center",
           }}
         >
-          <img
-            src=""
-            alt="Postać Ludowa"
+       <img
+            src="\media\uploads\images\lowicz.webp"
+            alt="Postać ludowa"
             style={{ maxWidth: "100%", maxHeight: "100%" }}
           />
         </div>
