@@ -7,7 +7,6 @@ import LoginPage from "./LoginPage";
 import MainPageWithNavigate from "./MainPage";
 import ReservationPage from "./ReservationPage";
 import SignUpPage from "./SignUpPage";
-;
 
 export default class App extends Component {
     render() {

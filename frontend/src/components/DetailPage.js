@@ -13,14 +13,47 @@ const DetailPage = () => {
     const [dialogType, setDialogType] = useState("");
     const [rentalDate, setRentalDate] = useState(null);
     const [confirmationMessage, setConfirmationMessage] = useState("");
+    const [isRenter, setIsRenter] = useState(false);  // State to track if the user is a renter
 
     useEffect(() => {
         console.log("Type:", type);
         console.log("ID:", id);
+
         if (!id || !type) {
             setErrorMessage("Missing URL parameters.");
             setLoading(false);
             return;
+        }
+
+        // Fetch user data from the API
+        const token = localStorage.getItem("token");
+        if (token) {
+            const headers = {
+                Authorization: `Token ${token}`,
+                "Content-Type": "application/json",
+            };
+
+            console.log("Fetching user data...");
+            fetch("/api/user/me", { headers })
+                .then((res) => res.json())
+                .then((user) => {
+                    console.log("Fetched user:", user);
+
+                    if (!user || !user.id) {
+                        setErrorMessage("User data is incomplete.");
+                        setLoading(false);
+                        return;
+                    }
+
+                    setIsRenter(user.is_renter);  // Set renter status based on the user data
+                    console.log("User is_renter:", user.is_renter);
+                })
+                .catch(() => {
+                    setErrorMessage("Błąd pobierania użytkownika.");
+                    setLoading(false);
+                });
+        } else {
+            console.log("No token found in localStorage.");
         }
 
         const endpoint =
@@ -28,12 +61,15 @@ const DetailPage = () => {
                 ? `/api/stroje/stroj${id}/detail`
                 : `/api/stroje/element${id}/detail`;
 
+        console.log("Fetching item data from:", endpoint);
+
         fetch(endpoint)
             .then((res) => {
                 if (!res.ok) throw new Error("Failed to fetch details.");
                 return res.json();
             })
             .then((json) => {
+                console.log("Fetched item data:", json);
                 setData(json);
                 setLoading(false);
             })
@@ -78,7 +114,7 @@ const DetailPage = () => {
         };
 
         try {
-            const res = await fetch("/api/wypozczenia/create/", {
+            const res = await fetch("/api/wypozyczenia/create/", {
                 method: "POST",
                 headers: {
                     Authorization: `Token ${token}`,
@@ -93,7 +129,7 @@ const DetailPage = () => {
 
             const responseData = await res.json();
 
-            // Set the confirmation message
+
             setConfirmationMessage(
                 `Dziękujemy bardzo za ${dialogType === "reserve" ? "rezerwację" : "wypożyczenie"}! Element: ${data.name} ${type === "stroj" ? "(Stroj)" : "(Element Stroju)"}`
             );
@@ -125,6 +161,10 @@ const DetailPage = () => {
         }
         return null;
     };
+
+    useEffect(() => {
+        console.log("isRenter value:", isRenter);
+    }, [isRenter]);
 
     return (
         <div
@@ -215,20 +255,29 @@ const DetailPage = () => {
 
                         {/* Buttons */}
                         <div style={{ marginTop: "20px", textAlign: "center" }}>
-                            <Button
-                                onClick={handleRental}
-                                variant="contained"
-                                style={{ backgroundColor: "#a52a2a", color: "#fff", margin: "10px" }}
-                            >
-                                Wypożycz
-                            </Button>
-                            <Button
-                                onClick={handleReservation}
-                                variant="contained"
-                                style={{ backgroundColor: "#337ab7", color: "#fff", margin: "10px" }}
-                            >
-                                Rezerwuj
-                            </Button>
+                            {/* Log isRenter value */}
+                            {console.log("Rendering buttons. isRenter:", isRenter)}
+
+                            {/* Show buttons only if the user is not a renter */}
+                            {!isRenter && (
+                                <>
+                                    <Button
+                                        onClick={handleRental}
+                                        variant="contained"
+                                        style={{ backgroundColor: "#a52a2a", color: "#fff", margin: "10px" }}
+                                    >
+                                        Wypożycz
+                                    </Button>
+                                    <Button
+                                        onClick={handleReservation}
+                                        variant="contained"
+                                        style={{ backgroundColor: "#337ab7", color: "#fff", margin: "10px" }}
+                                    >
+                                        Rezerwuj
+                                    </Button>
+                                </>
+                            )}
+
                             <Button
                                 onClick={() => navigate(-1)}
                                 variant="outlined"

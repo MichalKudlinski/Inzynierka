@@ -79,7 +79,7 @@ const LoginPage = () => {
         })
             .then((response) => response.json().then((data) => ({ status: response.status, body: data })))
             .then(({ status, body }) => {
-                if (status !== 200) throw new Error(body.error || 'Invalid login credentials');
+                if (status !== 200) throw new Error(body.error || 'Błędne dane logowania. Spróbuj ponownie!');
                 localStorage.setItem('token', body.token);
                 navigate('/main');
             })
@@ -174,22 +174,41 @@ const LoginPage = () => {
                         variant="outlined"
                         color="primary"
                         style={{
-                        fontSize: "1rem",
-                        textTransform: "none",
-                        marginTop: "10px",
-                        padding: "10px 20px",
-                        borderRadius: "25px", 
-                        transition: "all 0.3s ease", 
-                        border: "2px solid #1976d2", 
-                        color: "white",
-                        backgroundColor: "#1976d2"
-                    }}
-                    fullWidth
-                    onClick={() => setOpenDialog(true)}
+                            fontSize: "1rem",
+                            textTransform: "none",
+                            marginTop: "10px",
+                            padding: "10px 20px",
+                            borderRadius: "25px",
+                            transition: "all 0.3s ease",
+                            border: "2px solid #1976d2",
+                            color: "white",
+                            backgroundColor: "#1976d2"
+                        }}
+                        fullWidth
+                        onClick={() => setOpenDialog(true)}
 
-                >
-                    Zapomniałem hasła
-                      </Button>
+                    >
+                        Zapomniałem hasła
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        color="secondary"
+                        fullWidth
+                        style={{
+                            fontSize: "1rem",
+                            textTransform: "none",
+                            marginTop: "10px",
+                            padding: "10px 20px",
+                            borderRadius: "25px",
+                            transition: "all 0.3s ease",
+                            border: "2px solid #6c757d",
+                            color: "#6c757d",
+                            backgroundColor: "white"
+                        }}
+                        onClick={() => navigate('/')}
+                    >
+                        Wróć do strony głównej
+                    </Button>
                 </form>
             </div>
 
@@ -220,44 +239,44 @@ const LoginPage = () => {
                     )}
                 </DialogContent>
                 <DialogActions>
-  <Button
-    onClick={handleDialogClose}
-    variant="contained"
-    style={{
-      backgroundColor: "#d9534f",
-      color: "#fff",
-      fontWeight: "bold",
-      borderRadius: "8px",
-      textTransform: "none",
-      padding: "8px 16px",
-      boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-      transition: "background-color 0.3s",
-    }}
-    onMouseOver={(e) => (e.target.style.backgroundColor = "#c9302c")}
-    onMouseOut={(e) => (e.target.style.backgroundColor = "#d9534f")}
-  >
-    Zamknij
-  </Button>
+                    <Button
+                        onClick={handleDialogClose}
+                        variant="contained"
+                        style={{
+                            backgroundColor: "#d9534f",
+                            color: "#fff",
+                            fontWeight: "bold",
+                            borderRadius: "8px",
+                            textTransform: "none",
+                            padding: "8px 16px",
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                            transition: "background-color 0.3s",
+                        }}
+                        onMouseOver={(e) => (e.target.style.backgroundColor = "#c9302c")}
+                        onMouseOut={(e) => (e.target.style.backgroundColor = "#d9534f")}
+                    >
+                        Zamknij
+                    </Button>
 
-  <Button
-    onClick={handleForgotPassword}
-    variant="contained"
-    style={{
-      backgroundColor: "#337ab7",
-      color: "#fff",
-      fontWeight: "bold",
-      borderRadius: "8px",
-      textTransform: "none",
-      padding: "8px 16px",
-      boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-      transition: "background-color 0.3s",
-    }}
-    onMouseOver={(e) => (e.target.style.backgroundColor = "#23527c")}
-    onMouseOut={(e) => (e.target.style.backgroundColor = "#337ab7")}
-  >
-    Wyślij nowe hasło
-  </Button>
-</DialogActions>
+                    <Button
+                        onClick={handleForgotPassword}
+                        variant="contained"
+                        style={{
+                            backgroundColor: "#337ab7",
+                            color: "#fff",
+                            fontWeight: "bold",
+                            borderRadius: "8px",
+                            textTransform: "none",
+                            padding: "8px 16px",
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                            transition: "background-color 0.3s",
+                        }}
+                        onMouseOver={(e) => (e.target.style.backgroundColor = "#23527c")}
+                        onMouseOut={(e) => (e.target.style.backgroundColor = "#337ab7")}
+                    >
+                        Wyślij nowe hasło
+                    </Button>
+                </DialogActions>
             </Dialog>
         </div>
     );

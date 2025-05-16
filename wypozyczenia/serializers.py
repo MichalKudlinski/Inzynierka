@@ -20,6 +20,7 @@ class WypozyczenieSerializer(serializers.ModelSerializer):
         # Ensure the test payload satisfies these conditions
         element_stroju = data.get('element_stroju')
         stroj = data.get('stroj')
+        wypozyczono = data.get('wypozyczono')
         rezerwacja = data.get('rezerwacja', False)
         current_time = datetime.now()
         zwrot = data.get('zwrot')
@@ -45,5 +46,7 @@ class WypozyczenieSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         zwrot = validated_data.get('zwrot', instance.zwrot)
         instance.zwrot = zwrot
+        rezerwacja = validated_data.get('rezerwacja', instance.rezerwacja)
+        instance.rezerwacja = rezerwacja
         instance.save()
         return instance

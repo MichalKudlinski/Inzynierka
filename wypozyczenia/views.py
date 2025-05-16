@@ -1,12 +1,11 @@
-import json
+from datetime import timedelta
 
 from django.core.mail import send_mail
-from django.http import JsonResponse
 from django.shortcuts import render
-from django.utils.crypto import get_random_string
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework import generics, status
-from rest_framework.permissions import AllowAny
+from django.utils import timezone
+from rest_framework import authentication, generics, permissions, status
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -17,12 +16,13 @@ from .serializers import WypozyczenieSerializer
 
 class CreateWypozyczenieView(generics.CreateAPIView):
     """Tworzenie nowego Wypozyczenia w systemie"""
-    permission_classes = (AllowAny,)
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
     serializer_class = WypozyczenieSerializer
     queryset = Wypozyczenie.objects.all()
 
     def post(self, request, *args, **kwargs):
-        print("Incoming Request Data:", request.data)  # Debug output
+        print("Incoming Request Data:", request.data)
         return super().post(request, *args, **kwargs)
 
     def perform_create(self, serializer):
@@ -44,47 +44,44 @@ class RetrieveWypozyczenieView(generics.RetrieveAPIView):
 
 class UpdateWypozyczenieView(generics.UpdateAPIView):
     """Zmiana nazwy stroju"""
-    permission_classes = (AllowAny,)
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
     queryset = Wypozyczenie.objects.all()
 
     serializer_class = WypozyczenieSerializer
 
 class DestroyWypozyczenieView(generics.DestroyAPIView):
     """Usuwanie stroju"""
-    permission_classes = (AllowAny,)
     queryset = Wypozyczenie.objects.all()
-
     serializer_class = WypozyczenieSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
-@csrf_exempt
-def reset_password(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            username = data.get("name")
+def send_reminders(request):
+        today = timezone.now()
 
-            if not username:
-                return JsonResponse({"error": "Username is required."}, status=400)
+        wypozyczenia = Wypozyczenie.objects.filter(
+            zwrot__gte=today + timedelta(days=2),
+            zwrot__lte=today + timedelta(days=7)
+        )
 
-            try:
-                user = User.objects.get(username=username)
-            except User.DoesNotExist:
-                return JsonResponse({"error": "User not found."}, status=404)
 
-            new_password = get_random_string(10)  # You can specify length
-            user.set_password(new_password)
-            user.save()
+        print(f"Found {wypozyczenia.count()} Wypozyczenie records to process")
 
-            send_mail(
-                "Reset Password",
-                f"Hello {user.username}, your new password is: {new_password}",
-                "no-reply@example.com",
-                [user.email],
-                fail_silently=False,
-            )
+        for wypozyczenie in wypozyczenia:
+            print(f"Processing Wypozyczenie ID={wypozyczenie.id} for user {wypozyczenie.user.email}")
 
-            return JsonResponse({"message": "New password sent to your email."})
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+            user = wypozyczenie.user
+            subject = f"Przypomnienie o wypożyczeniu - {wypozyczenie.id}"
+            message = f"""Dzień dobry, Zbliża się data zwrotu wypożyczenia o ID {wypozyczenie.id}.
+            Data zwrotu: {wypozyczenie.zwrot.strftime('%d-%m-%Y')}
+            Proszę o zwrócenie stroju w terminie. Jeśli chcesz wydłużyć swoje wypożyczenie, odpowiedz na ten mail.
+            Pozdrawiamy, Twój Zespół"""
 
-    return JsonResponse({"error": "Invalid request method."}, status=405)
+            from_email = "kudlinski.test@gmail.com"
+            recipient_list = ['michal.kudlinski@gmail.com']
+
+
+            send_mail(subject, message, from_email, recipient_list)
+            print(f"Email sent to {wypozyczenie.user.email} for Wypozyczenie ID={wypozyczenie.id}")
+

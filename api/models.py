@@ -1,8 +1,10 @@
 import logging
+import os
 
+from django.conf import settings
 from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
                                         PermissionsMixin)
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage, send_mail
 from django.db import models
 
 """
@@ -56,14 +58,26 @@ class User(AbstractBaseUser, PermissionsMixin):
                 subject = "Dziękujemy za rejestrację!"
                 message = "Dzień dobry, dziekujemy za rejestrację w naszym serwisie." \
                 "Instrukcja dodawania swoich strojów, umożliwiając tym samym ich wypożyczenie innym użytkownikom:" \
-                "1. W szablonie pliku excel znajdującym się w załączniku proszę wypełnić dane na temat strojów" \
-                "2. Wypełniony plik excel proszę o odesłanie na mail: heritage_wear@gmail.com wraz zdjęciami poszczególnych" \
-                "czesci garderoby, nazwy plików zdjęć powinny odpowiadać nazwom produktów zawartym w pliku excel."
+                "1. W szablonie pliku excel znajdującym się w załączniku proszę wypełnić dane na temat strojów i poszczególnych elementów" \
+                "2. Wypełnione pliki excel proszę o odesłanie na mail: heritage_wear@gmail.com wraz zdjęciami poszczególnych" \
+                "czesci garderoby, nazwy plików zdjęć powinny odpowiadać nazwom produktów zawartym w plikach excel."
                 from_email = "kudlinski.test@gmail.com"
                 recipient_list = ['michal.kudlinski@gmail.com']
+                email = EmailMessage(subject, message, from_email, recipient_list)
 
+        # Attach Excel files
+                base_path = os.path.join(settings.MEDIA_ROOT, "uploads", "excels")
+                file_paths = [
+                    os.path.join(base_path, "stroje.xlsx"),
+                    os.path.join(base_path, "element_stroju.xlsx"),
+                     ]
+                for path in file_paths:
+                    if os.path.exists(path):
+                        email.attach_file(path)
+                    else:
+                        print(f"Attachment not found: {path}")
                 try:
-                    send_mail(subject, message, from_email, recipient_list)
+                    email.send()
                     print(f"Email sent to {self.email}")
                 except Exception as e:
                     print(f"Error sending email to {self.email}: {e}")
@@ -177,7 +191,7 @@ class Wypozyczenie(models.Model):
     element_stroju = models.ForeignKey('ElementStroju', on_delete=models.CASCADE, blank=True, null=True)
     stroj = models.ForeignKey('Stroj', on_delete=models.CASCADE, blank=True, null=True)
 
-    wypozyczono = models.DateTimeField(auto_now_add=True)
+    wypozyczono = models.DateTimeField(auto_now_add=False)
     zwrot = models.DateTimeField(blank=True, null=True)
     rezerwacja = models.BooleanField(default=False)  # Czy rezerwacja
 
@@ -208,7 +222,7 @@ class Wypozyczenie(models.Model):
                 wypozyczono = self.wypozyczono.strftime('%d-%m-%Y') if self.wypozyczono else 'Brak daty'
                 zwrot = self.zwrot.strftime('%d-%m-%Y') if self.zwrot else 'Brak daty'
                 # Construct the email body
-                name = self.element_stroju.name if self.element_stroju else self.stroj_name
+                name = self.element_stroju.name if self.element_stroju else self.stroj.name
                 if not self.rezerwacja:  # Only modify the email body if reservation is False
 
                     message = f"""Dzień dobry,

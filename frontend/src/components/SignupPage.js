@@ -1,21 +1,27 @@
-import { Button, Checkbox, FormControlLabel, Snackbar, TextField, Typography } from "@material-ui/core";
-import React, { Component } from "react";
+import {
+  Button,
+  Checkbox,
+  FormControlLabel,
+  Snackbar,
+  TextField,
+  Typography,
+} from "@material-ui/core";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default class SignUpPage extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      email: "",
-      password: "",
-      name: "",
-      isRenter: false,  // New state for checkbox
-      csrfToken: "",
-      errorMessage: "",
-      successMessage: false, // To handle Snackbar visibility
-    };
-  }
+export default function SignUpPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [isRenter, setIsRenter] = useState(false);
+  const [csrfToken, setCsrfToken] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState(false);
 
-  componentDidMount() {
+  const navigate = useNavigate(); // Hook for navigation
+
+  useEffect(() => {
     const getCookie = (name) => {
       let cookieValue = null;
       if (document.cookie && document.cookie !== "") {
@@ -31,27 +37,40 @@ export default class SignUpPage extends Component {
       return cookieValue;
     };
     const csrfToken = getCookie("csrftoken");
-    this.setState({ csrfToken });
-  }
+    setCsrfToken(csrfToken);
+  }, []);
 
-  handleInputChange = (event) => {
+  const handleInputChange = (event) => {
     const { name, value } = event.target;
-    this.setState({ [name]: value });
+    if (name === "email") setEmail(value);
+    if (name === "password") setPassword(value);
+    if (name === "name") setName(value);
+    if (name === "phone") setPhone(value);
   };
 
-  handleCheckboxChange = (event) => {
-    this.setState({ isRenter: event.target.checked });
+  const handleCheckboxChange = (event) => {
+    setIsRenter(event.target.checked);
   };
 
-  handleSignUpButtonPressed = () => {
-    const { email, password, name, csrfToken, isRenter } = this.state;
+  const handleSignUpButtonPressed = () => {
+    // Validate phone number if isRenter is true
+    if (isRenter && (!phone || phone.length !== 9 || !/^\d{9}$/.test(phone))) {
+      setErrorMessage("Numer telefonu musi mieć dokładnie 9 cyfr.");
+      return;
+    }
+
+    const requestBody = { email, password, name, is_renter: isRenter };
+    if (isRenter) {
+      requestBody.phone_number = phone;
+    }
+
     const requestOptions = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": csrfToken,
       },
-      body: JSON.stringify({ email, password, name, is_renter: isRenter }), // Add is_renter here
+      body: JSON.stringify(requestBody),
     };
 
     fetch("/api/user/create/", requestOptions)
@@ -65,159 +84,186 @@ export default class SignUpPage extends Component {
       })
       .then((data) => {
         console.log("User created successfully:", data);
-        this.setState({ errorMessage: "", successMessage: true }); // Show success message
+        setErrorMessage("");
+        setSuccessMessage(true);
 
-        // Hide the success message after 3 seconds and redirect to login page
         setTimeout(() => {
-          window.location.href = "/login"; // Change this URL to the correct login page URL
-        }, 3000); // 3 seconds
+          navigate("/login"); // Navigate to login page after 3 seconds
+        }, 3000);
       })
       .catch((error) => {
-        this.setState({ errorMessage: error.message });
+        setErrorMessage(error.message);
         console.error("Error creating user:", error);
       });
   };
 
-  handleCloseSnackbar = () => {
-    this.setState({ successMessage: false });
+  const handleCloseSnackbar = () => {
+    setSuccessMessage(false);
   };
 
-  render() {
-    return (
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateAreas: ` 'image-left form image-right' 'image-left form image-right' `,
+        gridTemplateColumns: "1fr 2fr 1fr",
+        height: "100vh",
+        gap: "20px",
+        padding: "10px",
+        backgroundColor: "#fbeec1",
+        backgroundSize: "cover",
+        fontFamily: "'Lobster', cursive",
+      }}
+    >
       <div
         style={{
-          display: "grid",
-          gridTemplateAreas: ` 'image-left form image-right' 'image-left form image-right' `,
-          gridTemplateColumns: "1fr 2fr 1fr",
-          height: "100vh",
-          gap: "20px",
-          padding: "10px",
-          backgroundColor: "#fbeec1",
-          backgroundSize: "cover",
-          fontFamily: "'Lobster', cursive",
+          gridArea: "image-left",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
-        <div
-          style={{
-            gridArea: "image-left",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <img
-            src="/media\uploads\images\lowiczanka.webp"
-            alt="Postać ludowa"
-            style={{ maxWidth: "100%", maxHeight: "100%" }}
-          />
-        </div>
-
-        <div
-          style={{
-            gridArea: "form",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: "#ffffffcc",
-            padding: "30px",
-            borderRadius: "15px",
-            boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.3)",
-          }}
-        >
-          <Typography
-            component="h4"
-            variant="h4"
-            style={{ marginBottom: "30px", color: "#b71c1c" }}
-          >
-            Rejestracja
-          </Typography>
-          {this.state.errorMessage && (
-            <Typography
-              color="error"
-              variant="body1"
-              style={{ marginBottom: "20px" }}
-            >
-              {this.state.errorMessage}
-            </Typography>
-          )}
-          <TextField
-            label="Nazwa Użytkownika"
-            variant="outlined"
-            fullWidth
-            name="name"
-            value={this.state.name}
-            onChange={this.handleInputChange}
-            style={{ marginBottom: "20px" }}
-          />
-          <TextField
-            label="Email"
-            variant="outlined"
-            fullWidth
-            name="email"
-            value={this.state.email}
-            onChange={this.handleInputChange}
-            style={{ marginBottom: "20px" }}
-          />
-          <TextField
-            label="Hasło"
-            variant="outlined"
-            fullWidth
-            type="password"
-            name="password"
-            value={this.state.password}
-            onChange={this.handleInputChange}
-            style={{ marginBottom: "30px" }}
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={this.state.isRenter}
-                onChange={this.handleCheckboxChange}
-                name="isRenter"
-                color="primary"
-              />
-            }
-            label="Chcę zostać wynajmującym"
-          />
-          <Button
-            variant="contained"
-            style={{
-              backgroundColor: "#b71c1c",
-              color: "white",
-              fontWeight: "bold",
-              padding: "15px",
-            }}
-            fullWidth
-            onClick={this.handleSignUpButtonPressed}
-          >
-            Zarejestruj się
-          </Button>
-        </div>
-
-        <div
-          style={{
-            gridArea: "image-right",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-       <img
-            src="\media\uploads\images\lowicz.webp"
-            alt="Postać ludowa"
-            style={{ maxWidth: "100%", maxHeight: "100%" }}
-          />
-        </div>
-
-        {/* Snackbar for success message */}
-        <Snackbar
-          open={this.state.successMessage}
-          autoHideDuration={3000}
-          onClose={this.handleCloseSnackbar}
-          message="Użytkownik zarejestrowany pomyślnie!"
+        <img
+          src="/media\uploads\images\lowiczanka.webp"
+          alt="Postać ludowa"
+          style={{ maxWidth: "100%", maxHeight: "100%" }}
         />
       </div>
-    );
-  }
+
+      <div
+        style={{
+          gridArea: "form",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#ffffffcc",
+          padding: "30px",
+          borderRadius: "15px",
+          boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.3)",
+        }}
+      >
+        <Typography
+          component="h4"
+          variant="h4"
+          style={{ marginBottom: "30px", color: "#b71c1c" }}
+        >
+          Rejestracja
+        </Typography>
+        {errorMessage && (
+          <Typography color="error" variant="body1" style={{ marginBottom: "20px" }}>
+            {errorMessage}
+          </Typography>
+        )}
+        <TextField
+          label="Nazwa Użytkownika"
+          variant="outlined"
+          fullWidth
+          name="name"
+          value={name}
+          onChange={handleInputChange}
+          style={{ marginBottom: "20px" }}
+        />
+        <TextField
+          label="Email"
+          variant="outlined"
+          fullWidth
+          name="email"
+          value={email}
+          onChange={handleInputChange}
+          style={{ marginBottom: "20px" }}
+        />
+        <TextField
+          label="Hasło"
+          variant="outlined"
+          fullWidth
+          type="password"
+          name="password"
+          value={password}
+          onChange={handleInputChange}
+          style={{ marginBottom: "20px" }}
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={isRenter}
+              onChange={handleCheckboxChange}
+              name="isRenter"
+              color="primary"
+            />
+          }
+          label="Chcę zostać wynajmującym"
+          style={{ marginBottom: "20px" }}
+        />
+
+        {isRenter && (
+          <TextField
+            label="Numer telefonu (9 cyfr)"
+            variant="outlined"
+            fullWidth
+            name="phone"
+            value={phone}
+            onChange={handleInputChange}
+            inputProps={{ maxLength: 9 }}
+            style={{ marginBottom: "30px" }}
+          />
+        )}
+
+        <Button
+          variant="contained"
+          style={{
+            backgroundColor: "#b71c1c",
+            color: "white",
+            fontWeight: "bold",
+            padding: "15px",
+          }}
+          fullWidth
+          onClick={handleSignUpButtonPressed}
+        >
+          Zarejestruj się
+        </Button>
+        <Button
+          variant="outlined"
+          color="secondary"
+          fullWidth
+          style={{
+            fontSize: "1rem",
+            textTransform: "none",
+            marginTop: "10px",
+            padding: "10px 20px",
+            borderRadius: "25px",
+            transition: "all 0.3s ease",
+            border: "2px solid #6c757d",
+            color: "#6c757d",
+            backgroundColor: "white",
+          }}
+          onClick={() => navigate("/")}
+        >
+          Wróć do strony głównej
+        </Button>
+      </div>
+
+      <div
+        style={{
+          gridArea: "image-right",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <img
+          src="\media\uploads\images\lowicz.webp"
+          alt="Postać ludowa"
+          style={{ maxWidth: "100%", maxHeight: "100%" }}
+        />
+      </div>
+
+      <Snackbar
+        open={successMessage}
+        autoHideDuration={1000}
+        onClose={handleCloseSnackbar}
+        message="Użytkownik zarejestrowany pomyślnie!"
+      />
+    </div>
+  );
 }
