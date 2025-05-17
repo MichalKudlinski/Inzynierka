@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'stroje',
     'wypozyczenia',
     'wiadomosci',
-    'django_cron',
+    'django_crontab',
 ]
 
 MIDDLEWARE = [
@@ -147,7 +147,9 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny',
                                    'rest_framework.permissions.IsAuthenticated',],
-    'DEFAULT_AUTHENTICATION_CLASSES': ['rest_framework.authentication.SessionAuthentication',]
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
 }
 
 CORS_ALLOW_ALL_ORIGINS = True

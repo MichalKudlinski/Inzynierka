@@ -1,59 +1,63 @@
-import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Paper, TextField, Typography } from "@material-ui/core";
+import {
+    Button,
+    CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Paper,
+    TextField,
+    Typography,
+} from "@material-ui/core";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 const DetailPage = () => {
     const { type, id } = useParams();
-    const navigate = useNavigate();  // Hook for navigation
+    const navigate = useNavigate();
+
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
     const [showDialog, setShowDialog] = useState(false);
     const [dialogMessage, setDialogMessage] = useState("");
     const [dialogType, setDialogType] = useState("");
+    const [wypozyczonoDate, setWypozyczonoDate] = useState(null);
     const [rentalDate, setRentalDate] = useState(null);
     const [confirmationMessage, setConfirmationMessage] = useState("");
-    const [isRenter, setIsRenter] = useState(false);  // State to track if the user is a renter
+    const [isRenter, setIsRenter] = useState(false);
+    const [reservations, setReservations] = useState([]);
+    const [user, setUser] = useState(null);
 
     useEffect(() => {
-        console.log("Type:", type);
-        console.log("ID:", id);
-
         if (!id || !type) {
             setErrorMessage("Missing URL parameters.");
             setLoading(false);
             return;
         }
 
-        // Fetch user data from the API
         const token = localStorage.getItem("token");
         if (token) {
-            const headers = {
-                Authorization: `Token ${token}`,
-                "Content-Type": "application/json",
-            };
-
-            console.log("Fetching user data...");
-            fetch("/api/user/me", { headers })
+            fetch("/api/user/me", {
+                headers: {
+                    Authorization: `Token ${token}`,
+                    "Content-Type": "application/json",
+                },
+            })
                 .then((res) => res.json())
-                .then((user) => {
-                    console.log("Fetched user:", user);
-
-                    if (!user || !user.id) {
+                .then((userData) => {
+                    if (!userData?.id) {
                         setErrorMessage("User data is incomplete.");
                         setLoading(false);
                         return;
                     }
-
-                    setIsRenter(user.is_renter);  // Set renter status based on the user data
-                    console.log("User is_renter:", user.is_renter);
+                    setUser(userData);
+                    setIsRenter(userData.is_renter);
                 })
                 .catch(() => {
                     setErrorMessage("Błąd pobierania użytkownika.");
                     setLoading(false);
                 });
-        } else {
-            console.log("No token found in localStorage.");
         }
 
         const endpoint =
@@ -61,94 +65,27 @@ const DetailPage = () => {
                 ? `/api/stroje/stroj${id}/detail`
                 : `/api/stroje/element${id}/detail`;
 
-        console.log("Fetching item data from:", endpoint);
-
         fetch(endpoint)
             .then((res) => {
                 if (!res.ok) throw new Error("Failed to fetch details.");
                 return res.json();
             })
-            .then((json) => {
-                console.log("Fetched item data:", json);
-                setData(json);
+            .then((itemData) => {
+                setData(itemData);
                 setLoading(false);
             })
             .catch((err) => {
                 setErrorMessage(err.message);
                 setLoading(false);
             });
+
+        fetch("/api/wypozyczenia/list", {
+            headers: { Authorization: `Token ${token}` },
+        })
+            .then((res) => res.json())
+            .then(setReservations)
+            .catch(console.error);
     }, [id, type]);
-
-    const handleReservation = () => {
-        setDialogMessage(`Please select the return date for the ${data.name} reservation.`);
-        setDialogType("reserve");
-        setShowDialog(true);
-    };
-
-    const handleRental = () => {
-        setDialogMessage(`Please select the return date for the ${data.name} rental.`);
-        setDialogType("rental");
-        setShowDialog(true);
-    };
-
-    const handleDateChange = (date) => {
-        setRentalDate(date);
-    };
-
-    const confirmAction = async () => {
-        if (!rentalDate) {
-            alert("Please select a return date.");
-            return;
-        }
-
-        const token = localStorage.getItem("token");
-        if (!token) {
-            alert("User token not found.");
-            return;
-        }
-
-        const payload = {
-            [dialogType === "reserve" ? "rezerwacja" : "wypozyczenie"]: true,
-            zwrot: rentalDate.toISOString(),
-            [type === "stroj" ? "stroj" : "element_stroju"]: data.id,
-        };
-
-        try {
-            const res = await fetch("/api/wypozyczenia/create/", {
-                method: "POST",
-                headers: {
-                    Authorization: `Token ${token}`,
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": getCSRFToken(),
-                },
-                credentials: "include",
-                body: JSON.stringify(payload),
-            });
-
-            if (!res.ok) throw new Error("Failed to perform action.");
-
-            const responseData = await res.json();
-
-
-            setConfirmationMessage(
-                `Dziękujemy bardzo za ${dialogType === "reserve" ? "rezerwację" : "wypożyczenie"}! Element: ${data.name} ${type === "stroj" ? "(Stroj)" : "(Element Stroju)"}`
-            );
-
-            // Redirect back to the previous page after the message
-            setTimeout(() => {
-                navigate(-1);  // Navigate back to the previous page
-            }, 3000);  // Delay the navigation for 3 seconds to show the confirmation message
-
-            setShowDialog(false);
-        } catch (error) {
-            alert("Failed to execute action: " + error.message);
-            setShowDialog(false);
-        }
-    };
-
-    const cancelAction = () => {
-        setShowDialog(false);
-    };
 
     const getCSRFToken = () => {
         const name = "csrftoken";
@@ -162,157 +99,159 @@ const DetailPage = () => {
         return null;
     };
 
-    useEffect(() => {
-        console.log("isRenter value:", isRenter);
-    }, [isRenter]);
+    const handleReservation = () => {
+        setDialogType("reserve");
+        setDialogMessage(`Please select the return date for the ${data.name} reservation.`);
+        setShowDialog(true);
+    };
+
+    const handleRental = () => {
+        setDialogType("rental");
+        setDialogMessage(`Please select the return date for the ${data.name} rental.`);
+        setShowDialog(true);
+    };
+
+    const confirmAction = async () => {
+        if (!wypozyczonoDate || !rentalDate) {
+            alert("Proszę wybrać obie daty.");
+            return;
+        }
+
+        const now = new Date();
+        if (wypozyczonoDate < now || rentalDate < now) {
+            alert("Daty muszą być w przyszłości.");
+            return;
+        }
+
+        if (wypozyczonoDate >= rentalDate) {
+            alert("Data zwrotu musi być po dacie wypożyczenia.");
+            return;
+        }
+
+        const isElement = type !== "stroj";
+        const itemId = data.id;
+
+        const hasConflict = reservations.some((rental) => {
+            const match = isElement ? rental.element_stroju === itemId : rental.stroj === itemId;
+            if (!match) return false;
+            const start = new Date(rental.wypozyczono);
+            const end = new Date(rental.zwrot);
+            return wypozyczonoDate < end && rentalDate > start;
+        });
+
+        if (hasConflict) {
+            alert("Wybrane daty kolidują z istniejącą rezerwacją.");
+            return;
+        }
+
+        const payload = {
+            rezerwacja: dialogType === "reserve",
+            wypozyczono: wypozyczonoDate.toISOString(),
+            zwrot: rentalDate.toISOString(),
+            [isElement ? "element_stroju" : "stroj"]: itemId,
+        };
+
+        try {
+            const res = await fetch("/api/wypozyczenia/create/", {
+                method: "POST",
+                headers: {
+                    Authorization: `Token ${localStorage.getItem("token")}`,
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCSRFToken(),
+                },
+                credentials: "include",
+                body: JSON.stringify(payload),
+            });
+
+            if (!res.ok) throw new Error("Błąd podczas zapisu.");
+
+            const result = await res.json();
+            alert(`${dialogType === "reserve" ? "Rezerwacja" : "Wypożyczenie"} utworzono! ID: ${result.id}`);
+            setConfirmationMessage(`${dialogType === "reserve" ? "Rezerwacja" : "Wypożyczenie"} zakończona pomyślnie.`);
+            setShowDialog(false);
+            setWypozyczonoDate(null);
+            setRentalDate(null);
+        } catch (error) {
+            alert("Nie udało się wykonać akcji: " + error.message);
+            setShowDialog(false);
+        }
+    };
 
     return (
-        <div
-            style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "flex-start",
-                minHeight: "100vh",
-                backgroundColor: "#ffebcc",
-                fontFamily: "'Lobster', cursive",
-                padding: "40px 20px",
-            }}
-        >
-            <Paper
-                style={{
-                    padding: "30px",
-                    backgroundColor: "rgba(255, 255, 255, 0.95)",
-                    borderRadius: "15px",
-                    boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
-                    maxWidth: "800px",
-                    width: "100%",
-                }}
-            >
+        <div style={{ display: "flex", justifyContent: "center", padding: "40px 20px", backgroundColor: "#fdf6ec" }}>
+            <Paper style={{ padding: "40px", borderRadius: "20px", backgroundColor: "white", maxWidth: 900, width: "100%", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }}>
                 {loading ? (
-                    <div style={{ textAlign: "center" }}>
-                        <CircularProgress />
-                    </div>
+                    <CircularProgress />
                 ) : errorMessage ? (
-                    <Typography color="error" variant="body1">
-                        {errorMessage}
-                    </Typography>
+                    <Typography color="error">{errorMessage}</Typography>
                 ) : (
                     <>
-                        <Typography variant="h4" gutterBottom style={{ color: "#d62828" }}>
-                            Szczegóły {type === "stroj" ? "stroju" : "elementu stroju"}
-                        </Typography>
-
-                        {/* Name */}
-                        <Typography variant="h5" gutterBottom>
-                            <strong>Nazwa:</strong> {data.name}
-                        </Typography>
-
-                        {/* Gender */}
-                        <Typography variant="body1" gutterBottom>
-                            <strong>Płeć:</strong> {data.gender}
-                        </Typography>
-
-                        {/* Size */}
-                        <Typography variant="body1" gutterBottom>
-                            <strong>Rozmiar:</strong> {data.size}
-                        </Typography>
-                        <Typography variant="body1" gutterBottom>
-                            <strong>Miasto:</strong> {data.city}
-                        </Typography>
-
-                        {/* Description */}
-                        <Typography
-                            variant="body1"
-                            gutterBottom
-                            style={{
-                                marginTop: "20px",
-                                fontSize: "18px",
-                                lineHeight: 1.6,
-                                backgroundColor: "#fff7e6",
-                                padding: "15px",
-                                borderRadius: "10px",
-                                border: "1px solid #ffd699",
-                            }}
-                        >
-                            <strong>Opis:</strong><br />
-                            {data.description}
-                        </Typography>
+                        <Typography variant="h4" gutterBottom>Szczegóły {type === "stroj" ? "stroju" : "elementu"}</Typography>
+                        <Typography variant="h5" gutterBottom><strong>Nazwa:</strong> {data.name}</Typography>
+                        <Typography><strong>Płeć:</strong> {data.gender}</Typography>
+                        <Typography><strong>Rozmiar:</strong> {data.size}</Typography>
+                        <Typography><strong>Miasto:</strong> {data.city}</Typography>
+                        <Typography style={{ marginTop: 20 }}><strong>Opis:</strong><br />{data.description}</Typography>
 
                         {data.name && (
-                            <div style={{ textAlign: "center", marginTop: "30px" }}>
-                                <img
-                                    src={`/media/uploads/images/${data.name}.jpg`}
-                                    alt="Zdjęcie"
-                                    style={{
-                                        maxWidth: "100%",
-                                        maxHeight: "400px",
-                                        borderRadius: "10px",
-                                        border: "1px solid #ccc",
-                                    }}
-                                />
+                            <img
+                                src={`/media/uploads/images/${data.name}.jpg`}
+                                alt="Zdjęcie"
+                                style={{
+                                    width: "100%",
+                                    maxHeight: 500,
+                                    objectFit: "cover",
+                                    marginTop: 30,
+                                    borderRadius: "12px",
+                                    boxShadow: "0 4px 10px rgba(0,0,0,0.2)"
+                                }}
+                            />
+                        )}
+
+                        {!isRenter && (
+                            <div style={{ marginTop: 30 }}>
+                                <Button onClick={handleRental} style={{ marginRight: 15 }} variant="contained" color="primary">
+                                    Wypożycz
+                                </Button>
+                                <Button onClick={handleReservation} variant="contained" color="secondary">
+                                    Rezerwuj
+                                </Button>
                             </div>
                         )}
-
-                        {/* Buttons */}
-                        <div style={{ marginTop: "20px", textAlign: "center" }}>
-                            {/* Log isRenter value */}
-                            {console.log("Rendering buttons. isRenter:", isRenter)}
-
-                            {/* Show buttons only if the user is not a renter */}
-                            {!isRenter && (
-                                <>
-                                    <Button
-                                        onClick={handleRental}
-                                        variant="contained"
-                                        style={{ backgroundColor: "#a52a2a", color: "#fff", margin: "10px" }}
-                                    >
-                                        Wypożycz
-                                    </Button>
-                                    <Button
-                                        onClick={handleReservation}
-                                        variant="contained"
-                                        style={{ backgroundColor: "#337ab7", color: "#fff", margin: "10px" }}
-                                    >
-                                        Rezerwuj
-                                    </Button>
-                                </>
-                            )}
-
-                            <Button
-                                onClick={() => navigate(-1)}
-                                variant="outlined"
-                                style={{ marginBottom: "20px", color: "#d62828", borderColor: "#d62828" }}
-                            >
-                                ← Powrót
-                            </Button>
-                        </div>
-
-                        {/* Confirmation message */}
-                        {confirmationMessage && (
-                            <Typography variant="h6" style={{ color: "#28a745", marginTop: "20px", textAlign: "center" }}>
-                                {confirmationMessage}
-                            </Typography>
-                        )}
+                        <Button onClick={() => navigate(-1)} variant="outlined" style={{ marginTop: 30 }}>
+                            ← Powrót
+                        </Button>
+                        {confirmationMessage && <Typography color="primary" style={{ marginTop: 20 }}>{confirmationMessage}</Typography>}
                     </>
                 )}
             </Paper>
 
-            {/* Dialog for reservation or rental */}
-            <Dialog open={showDialog} onClose={cancelAction}>
+            {/* Dialog */}
+            <Dialog open={showDialog} onClose={() => setShowDialog(false)}>
                 <DialogTitle>Potwierdzenie</DialogTitle>
                 <DialogContent>
-                    <Typography variant="body1">{dialogMessage}</Typography>
+                    <Typography>{dialogMessage}</Typography>
                     <TextField
+                        label="Data wypożyczenia"
                         type="datetime-local"
-                        label="Wybierz datę zwrotu"
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                        value={wypozyczonoDate ? wypozyczonoDate.toISOString().slice(0, 16) : ""}
+                        onChange={(e) => setWypozyczonoDate(new Date(e.target.value))}
+                        style={{ marginTop: 16 }}
+                    />
+                    <TextField
+                        label="Data zwrotu"
+                        type="datetime-local"
                         fullWidth
                         InputLabelProps={{ shrink: true }}
                         value={rentalDate ? rentalDate.toISOString().slice(0, 16) : ""}
-                        onChange={(e) => handleDateChange(new Date(e.target.value))}
+                        onChange={(e) => setRentalDate(new Date(e.target.value))}
+                        style={{ marginTop: 16 }}
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={cancelAction} color="secondary">Anuluj</Button>
+                    <Button onClick={() => setShowDialog(false)} color="secondary">Anuluj</Button>
                     <Button onClick={confirmAction} color="primary">Potwierdź</Button>
                 </DialogActions>
             </Dialog>

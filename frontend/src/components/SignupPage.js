@@ -12,12 +12,20 @@ import { useNavigate } from "react-router-dom";
 export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [Nazwa, setNazwa] = useState("");
   const [phone, setPhone] = useState("");
   const [isRenter, setIsRenter] = useState(false);
   const [csrfToken, setCsrfToken] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState(false);
+
+  // New state to track field-specific errors
+  const [fieldErrors, setFieldErrors] = useState({
+    Nazwa: "",
+    email: "",
+    password: "",
+    phone: "",
+  });
 
   const navigate = useNavigate(); // Hook for navigation
 
@@ -44,22 +52,70 @@ export default function SignUpPage() {
     const { name, value } = event.target;
     if (name === "email") setEmail(value);
     if (name === "password") setPassword(value);
-    if (name === "name") setName(value);
+    if (name === "Nazwa") setNazwa(value);
     if (name === "phone") setPhone(value);
+
+    // Clear the field-specific error on input change
+    setFieldErrors((prev) => ({ ...prev, [name]: "" }));
+    // Also clear general error
+    setErrorMessage("");
   };
 
   const handleCheckboxChange = (event) => {
     setIsRenter(event.target.checked);
+    // Clear phone errors if toggling off
+    if (!event.target.checked) {
+      setFieldErrors((prev) => ({ ...prev, phone: "" }));
+      setPhone("");
+    }
+  };
+
+  // Validate inputs individually and set errors accordingly
+  const validateInputs = () => {
+    let isValid = true;
+    const newFieldErrors = {
+      Nazwa: "",
+      email: "",
+      password: "",
+      phone: "",
+    };
+
+    if (!Nazwa.trim()) {
+      newFieldErrors.Nazwa = "Nazwa jest wymagana.";
+      isValid = false;
+    }
+
+    // Basic email regex
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newFieldErrors.email = "Nieprawidłowy adres e-mail.";
+      isValid = false;
+    }
+
+    // Password min 8 chars, at least one uppercase, one lowercase and one number
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(password)) {
+      newFieldErrors.password =
+        "Hasło min. 8 znaków, 1 wielka litera, 1 mała litera, 1 cyfra.";
+      isValid = false;
+    }
+
+    if (isRenter) {
+      if (!phone || phone.length !== 9 || !/^\d{9}$/.test(phone)) {
+        newFieldErrors.phone = "Numer telefonu musi mieć dokładnie 9 cyfr.";
+        isValid = false;
+      }
+    }
+
+    setFieldErrors(newFieldErrors);
+    return isValid;
   };
 
   const handleSignUpButtonPressed = () => {
-    // Validate phone number if isRenter is true
-    if (isRenter && (!phone || phone.length !== 9 || !/^\d{9}$/.test(phone))) {
-      setErrorMessage("Numer telefonu musi mieć dokładnie 9 cyfr.");
+    if (!validateInputs()) {
+      setErrorMessage("Proszę poprawić błędy w formularzu.");
       return;
     }
 
-    const requestBody = { email, password, name, is_renter: isRenter };
+    const requestBody = { email, password, name: Nazwa, is_renter: isRenter };
     if (isRenter) {
       requestBody.phone_number = phone;
     }
@@ -77,23 +133,54 @@ export default function SignUpPage() {
       .then((response) => {
         if (!response.ok) {
           return response.json().then((data) => {
-            throw new Error(data.error || "Invalid input");
+            if (typeof data === "object") {
+              const apiFieldErrors = {};
+              let combinedMsg = "";
+
+
+              const translations = {
+                "user with this email already exists.": "Użytkownik z tym adresem email już istnieje.",
+                "user with this name already exists.": "Nazwa jest już zajęta.",
+              };
+
+              Object.entries(data).forEach(([key, val]) => {
+                if (Array.isArray(val)) {
+
+                  const translatedMessages = val.map(
+                    (msg) => translations[msg.toLowerCase()] || msg
+                  );
+
+                  const errorKey = key === "name" ? "Nazwa" : key;
+                  apiFieldErrors[errorKey] = translatedMessages.join(", ");
+                  combinedMsg += `${errorKey}: ${apiFieldErrors[errorKey]} | `;
+                } else {
+                  const errorKey = key === "name" ? "Nazwa" : key;
+                  apiFieldErrors[errorKey] =
+                    translations[val.toLowerCase()] || val;
+                  combinedMsg += `${errorKey}: ${apiFieldErrors[errorKey]} | `;
+                }
+              });
+              setFieldErrors((prev) => ({ ...prev, ...apiFieldErrors }));
+              throw new Error(combinedMsg.slice(0, -3));
+            }
+            throw new Error(data.error || "Nieprawidłowe dane wejściowe");
           });
         }
         return response.json();
       })
-      .then((data) => {
-        console.log("User created successfully:", data);
-        setErrorMessage("");
+      .then(() => {
         setSuccessMessage(true);
+        setErrorMessage("");
 
         setTimeout(() => {
-          navigate("/login"); // Navigate to login page after 3 seconds
-        }, 3000);
+          navigate("/login");
+        }, 2000);
       })
       .catch((error) => {
-        setErrorMessage(error.message);
-        console.error("Error creating user:", error);
+        setErrorMessage(
+          error.message || "Wystąpił błąd podczas tworzenia użytkownika."
+        );
+        console.error("Błąd tworzenia użytkownika:", error);
       });
   };
 
@@ -151,7 +238,11 @@ export default function SignUpPage() {
           Rejestracja
         </Typography>
         {errorMessage && (
-          <Typography color="error" variant="body1" style={{ marginBottom: "20px" }}>
+          <Typography
+            color="error"
+            variant="body1"
+            style={{ marginBottom: "20px" }}
+          >
             {errorMessage}
           </Typography>
         )}
@@ -159,10 +250,12 @@ export default function SignUpPage() {
           label="Nazwa Użytkownika"
           variant="outlined"
           fullWidth
-          name="name"
-          value={name}
+          name="Nazwa"
+          value={Nazwa}
           onChange={handleInputChange}
           style={{ marginBottom: "20px" }}
+          error={Boolean(fieldErrors.Nazwa)}
+          helperText={fieldErrors.Nazwa}
         />
         <TextField
           label="Email"
@@ -172,6 +265,8 @@ export default function SignUpPage() {
           value={email}
           onChange={handleInputChange}
           style={{ marginBottom: "20px" }}
+          error={Boolean(fieldErrors.email)}
+          helperText={fieldErrors.email}
         />
         <TextField
           label="Hasło"
@@ -182,6 +277,11 @@ export default function SignUpPage() {
           value={password}
           onChange={handleInputChange}
           style={{ marginBottom: "20px" }}
+          error={Boolean(fieldErrors.password)}
+          helperText={
+            fieldErrors.password ||
+            "Hasło min. 8 znaków, 1 wielka litera, 1 mała litera, 1 cyfra."
+          }
         />
         <FormControlLabel
           control={
@@ -206,6 +306,8 @@ export default function SignUpPage() {
             onChange={handleInputChange}
             inputProps={{ maxLength: 9 }}
             style={{ marginBottom: "30px" }}
+            error={Boolean(fieldErrors.phone)}
+            helperText={fieldErrors.phone}
           />
         )}
 
@@ -257,7 +359,6 @@ export default function SignUpPage() {
           style={{ maxWidth: "100%", maxHeight: "100%" }}
         />
       </div>
-
       <Snackbar
         open={successMessage}
         autoHideDuration={1000}

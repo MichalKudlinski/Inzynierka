@@ -25,6 +25,7 @@ class MainPage extends Component {
   }
 
   componentDidMount() {
+    this.handleSendReminders = this.handleSendReminders.bind(this);
     const token = localStorage.getItem("token");
     if (!token) {
       this.setState({ errorMessage: "Nie znaleziono tokenu użytkownika." });
@@ -157,6 +158,37 @@ class MainPage extends Component {
     });
   }
 
+  async handleSendReminders() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Brak tokenu. Zaloguj się ponownie.");
+      return;
+    }
+
+    try {
+      console.log("Calling /api/wypozyczenia/send-reminders/");
+      const res = await fetch("/api/wypozyczenia/send-reminders/", {
+        method: "GET",
+        headers: {
+          Authorization: `Token ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        console.error("send‑reminders failed:", data);
+        throw new Error(data.detail || "Nie udało się wysłać przypomnień");
+      }
+
+      const json = await res.json();
+      console.log("send‑reminders response:", json);
+      alert(`Wysłano przypomnienia dla ${json.sent} wypożyczeń.`);
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+    }
+  }
 
   async fetchRenterData(headers) {
     try {
@@ -598,6 +630,17 @@ class MainPage extends Component {
           >
             Wyloguj się
           </Button>
+          {user?.is_renter && (
+            <div style={{ textAlign: "center", marginTop: "20px" }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={this.handleSendReminders}
+              >
+                Wyślij przypomnienia
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Rentals and Reservations */}

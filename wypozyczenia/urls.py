@@ -8,4 +8,5 @@ urlpatterns = [
     path('<int:pk>/', views.RetrieveWypozyczenieView.as_view(), name='wypozyczenie-detail'),
     path('<int:pk>/update/', views.UpdateWypozyczenieView.as_view(), name='wypozyczenie-update'),
     path('<int:pk>/delete/', views.DestroyWypozyczenieView.as_view(), name='wypozyczenie-delete'),
+    path('send-reminders/', views.send_reminders, name='send-reminders'),
 ]
