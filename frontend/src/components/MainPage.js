@@ -1,4 +1,13 @@
-import { Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@material-ui/core";
+import {
+  Button,
+  Card,
+  CardContent,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Typography,
+} from "@material-ui/core";
 import React, { Component } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -67,18 +76,21 @@ class MainPage extends Component {
     }
 
     // Check if item is currently rented or reserved
-    const hasCurrentOrFutureRental = [...rentals, ...reservations].some((wypozyczenie) => {
-      if (itemToDelete.type === "stroj") {
-        return wypozyczenie.stroj === itemToDelete.id;
-      } else if (itemToDelete.type === "element_stroju") {
-        return wypozyczenie.element_stroju === itemToDelete.id;
+    const hasCurrentOrFutureRental = [...rentals, ...reservations].some(
+      (wypozyczenie) => {
+        if (itemToDelete.type === "stroj") {
+          return wypozyczenie.stroj === itemToDelete.id;
+        } else if (itemToDelete.type === "element_stroju") {
+          return wypozyczenie.element_stroju === itemToDelete.id;
+        }
+        return false;
       }
-      return false;
-    });
+    );
 
     if (hasCurrentOrFutureRental) {
       this.setState({
-        errorMessage: "Nie można usunąć elementu, ponieważ jest aktualnie wypożyczony lub zarezerwowany.",
+        errorMessage:
+          "Nie można usunąć elementu, ponieważ jest aktualnie wypożyczony lub zarezerwowany.",
         deleteConfirmationOpen: false,
         itemToDelete: null,
       });
@@ -116,12 +128,21 @@ class MainPage extends Component {
         };
 
         if (itemToDelete.type === "stroj") {
-          updatedState.allOwnedStroje = prevState.allOwnedStroje.filter((s) => s.id !== itemToDelete.id);
+          updatedState.allOwnedStroje = prevState.allOwnedStroje.filter(
+            (s) => s.id !== itemToDelete.id
+          );
         } else if (itemToDelete.type === "element_stroju") {
-          updatedState.allOwnedElementStroje = prevState.allOwnedElementStroje.filter((e) => e.id !== itemToDelete.id);
+          updatedState.allOwnedElementStroje =
+            prevState.allOwnedElementStroje.filter(
+              (e) => e.id !== itemToDelete.id
+            );
         } else {
-          updatedState.rentals = prevState.rentals.filter((r) => r.id !== itemToDelete.id);
-          updatedState.reservations = prevState.reservations.filter((r) => r.id !== itemToDelete.id);
+          updatedState.rentals = prevState.rentals.filter(
+            (r) => r.id !== itemToDelete.id
+          );
+          updatedState.reservations = prevState.reservations.filter(
+            (r) => r.id !== itemToDelete.id
+          );
         }
 
         return updatedState;
@@ -132,7 +153,11 @@ class MainPage extends Component {
   }
 
   openExtendDialog = (item) => {
-    this.setState({ extendDialogOpen: true, rentalToExtend: item, daysToExtend: 1 });
+    this.setState({
+      extendDialogOpen: true,
+      rentalToExtend: item,
+      daysToExtend: 1,
+    });
   };
   openDeleteConfirmation(item) {
     this.setState({
@@ -204,10 +229,9 @@ class MainPage extends Component {
 
       this.setState({ stroje, elementStroje });
 
-      const wypozyczeniaRes = await fetch(
-        "/api/wypozyczenia/list",
-        { headers }
-      );
+      const wypozyczeniaRes = await fetch("/api/wypozyczenia/list", {
+        headers,
+      });
       const allWypozyczenia = await wypozyczeniaRes.json();
 
       const filtered = allWypozyczenia.filter((wypozyczenie) => {
@@ -251,12 +275,14 @@ class MainPage extends Component {
         fetch("/api/stroje/element/list", { headers }),
       ]);
 
-      const [stroje, elementStroje] = await Promise.all([strojeRes.json(), elementStrojeRes.json()]);
+      const [stroje, elementStroje] = await Promise.all([
+        strojeRes.json(),
+        elementStrojeRes.json(),
+      ]);
 
-      const wypozyczeniaRes = await fetch(
-        "/api/wypozyczenia/list",
-        { headers }
-      );
+      const wypozyczeniaRes = await fetch("/api/wypozyczenia/list", {
+        headers,
+      });
       const wypozyczenia = await wypozyczeniaRes.json();
 
       const filteredWypozyczenia = wypozyczenia.filter((wypozyczenie) => {
@@ -271,10 +297,12 @@ class MainPage extends Component {
           typeof wypozyczenie.element_stroju === "object"
             ? wypozyczenie.element_stroju?.user
             : elementStroje.find((e) => e.id === wypozyczenie.element_stroju)
-              ?.user;
+                ?.user;
 
         return (
-          (isDirectUser || strojUser === userId || elementStrojUser === userId) &&
+          (isDirectUser ||
+            strojUser === userId ||
+            elementStrojUser === userId) &&
           this.isCurrentOrFuture(wypozyczenie)
         );
       });
@@ -340,12 +368,12 @@ class MainPage extends Component {
         }
       );
 
-      if (!response.ok) throw new Error("Błąd przy wysyłaniu danych do serwera");
+      if (!response.ok)
+        throw new Error("Błąd przy wysyłaniu danych do serwera");
 
       await response.json();
 
       alert("Wypożyczenie zostało przedłużone.");
-
 
       window.location.reload();
     } catch (error) {
@@ -378,7 +406,9 @@ class MainPage extends Component {
       this.componentDidMount(); // Re-fetch data
     } catch (error) {
       console.error(error);
-      this.setState({ errorMessage: "Błąd przy zmianie rezerwacji na wypożyczenie." });
+      this.setState({
+        errorMessage: "Błąd przy zmianie rezerwacji na wypożyczenie.",
+      });
     }
   };
   // Helper function to check if the rental is current or future
@@ -435,12 +465,14 @@ class MainPage extends Component {
           if (item.stroj) {
             return typeof item.stroj === "object"
               ? item.stroj.name
-              : stroje.find((s) => s.id === item.stroj)?.name || "Strój nieznany";
+              : stroje.find((s) => s.id === item.stroj)?.name ||
+                  "Strój nieznany";
           }
           if (item.element_stroju) {
             return typeof item.element_stroju === "object"
               ? item.element_stroju.name
-              : elementStroje.find((e) => e.id === item.element_stroju)?.name || "Element stroju nieznany";
+              : elementStroje.find((e) => e.id === item.element_stroju)?.name ||
+                  "Element stroju nieznany";
           }
           return "Nieznany przedmiot";
         })();
@@ -454,7 +486,8 @@ class MainPage extends Component {
         console.log("Zwrot date:", zwrotDate);
         console.log("Current date:", now);
 
-        const showTimer = !this.state.user?.is_renter &&
+        const showTimer =
+          !this.state.user?.is_renter &&
           item.wypozyczono &&
           item.zwrot &&
           wypozyczonoDate <= now &&
@@ -490,7 +523,10 @@ class MainPage extends Component {
                 Zwrot: {formatDate(item.zwrot)}
               </Typography>
               {showTimer && (
-                <Typography variant="body2" style={{ color: "green", marginTop: "5px" }}>
+                <Typography
+                  variant="body2"
+                  style={{ color: "green", marginTop: "5px" }}
+                >
                   Pozostało: {timeLeft}
                 </Typography>
               )}
@@ -500,7 +536,7 @@ class MainPage extends Component {
                 style={{ marginTop: "10px" }}
                 onClick={() => this.openDeleteConfirmation(item)}
               >
-                Delete
+                Anuluj
               </Button>
 
               <Button
@@ -526,7 +562,6 @@ class MainPage extends Component {
         );
       })
     );
-
   }
 
   renderOwnedItems(title, items) {
@@ -564,7 +599,12 @@ class MainPage extends Component {
               variant="contained"
               color="secondary"
               style={{ marginTop: "10px" }}
-              onClick={() => this.openDeleteConfirmation({ ...item, type: isElement ? "element_stroju" : "stroj" })}
+              onClick={() =>
+                this.openDeleteConfirmation({
+                  ...item,
+                  type: isElement ? "element_stroju" : "stroj",
+                })
+              }
             >
               Delete
             </Button>
@@ -586,7 +626,7 @@ class MainPage extends Component {
       itemToDelete,
       extendDialogOpen,
       extendDays,
-      rentalToExtend
+      rentalToExtend,
     } = this.state;
 
     const { navigate } = this.props;
@@ -603,16 +643,44 @@ class MainPage extends Component {
     };
 
     return (
-      <div style={{ height: "100vh", overflowY: "auto", padding: "10px", backgroundColor: "#ffebcc" }}>
+      <div
+        style={{
+          height: "100vh",
+          overflowY: "auto",
+          padding: "10px",
+          backgroundColor: "#ffebcc",
+        }}
+      >
         {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px", backgroundColor: "#a52a2a", borderRadius: "12px", color: "#fff", border: "3px solid #d4a373" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "20px",
+            backgroundColor: "#a52a2a",
+            borderRadius: "12px",
+            color: "#fff",
+            border: "3px solid #d4a373",
+          }}
+        >
           <Typography variant="h4" style={{ flexGrow: 1, textAlign: "center" }}>
             Witaj na stronie głównej użytkownika!
           </Typography>
         </div>
 
         {/* User info */}
-        <div style={{ border: "3px solid #d4a373", borderRadius: "12px", backgroundColor: "rgba(0, 0, 0, 0.6)", color: "#fff", padding: "20px", textAlign: "center", marginTop: "20px" }}>
+        <div
+          style={{
+            border: "3px solid #d4a373",
+            borderRadius: "12px",
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            color: "#fff",
+            padding: "20px",
+            textAlign: "center",
+            marginTop: "20px",
+          }}
+        >
           {errorMessage ? (
             <Typography color="error">{errorMessage}</Typography>
           ) : user ? (
@@ -626,7 +694,12 @@ class MainPage extends Component {
           <Button
             variant="contained"
             onClick={this.handleLogout}
-            style={{ backgroundColor: "#d9534f", color: "#fff", marginTop: "20px", borderRadius: "12px" }}
+            style={{
+              backgroundColor: "#d9534f",
+              color: "#fff",
+              marginTop: "20px",
+              borderRadius: "12px",
+            }}
           >
             Wyloguj się
           </Button>
@@ -644,16 +717,49 @@ class MainPage extends Component {
         </div>
 
         {/* Rentals and Reservations */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px", marginTop: "20px" }}>
-          <div style={{ border: "3px solid #d4a373", borderRadius: "12px", backgroundColor: "rgba(0, 0, 0, 0.6)", color: "#fff", padding: "20px" }}>
-            <Typography variant="h5" style={{ textAlign: "center", marginBottom: "10px" }}>
-              {user?.is_renter ? "Wypożyczenia Twoich przedmiotów" : "Twoje wypożyczenia"}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gap: "20px",
+            marginTop: "20px",
+          }}
+        >
+          <div
+            style={{
+              border: "3px solid #d4a373",
+              borderRadius: "12px",
+              backgroundColor: "rgba(0, 0, 0, 0.6)",
+              color: "#fff",
+              padding: "20px",
+            }}
+          >
+            <Typography
+              variant="h5"
+              style={{ textAlign: "center", marginBottom: "10px" }}
+            >
+              {user?.is_renter
+                ? "Wypożyczenia Twoich przedmiotów"
+                : "Twoje wypożyczenia"}
             </Typography>
             {this.renderList("Wypożyczenia", rentals, stroje, elementStroje)}
           </div>
-          <div style={{ border: "3px solid #d4a373", borderRadius: "12px", backgroundColor: "rgba(0, 0, 0, 0.6)", color: "#fff", padding: "20px" }}>
-            <Typography variant="h5" style={{ textAlign: "center", marginBottom: "10px" }}>
-              {user?.is_renter ? "Rezerwacje Twoich przedmiotów" : "Twoje rezerwacje"}
+          <div
+            style={{
+              border: "3px solid #d4a373",
+              borderRadius: "12px",
+              backgroundColor: "rgba(0, 0, 0, 0.6)",
+              color: "#fff",
+              padding: "20px",
+            }}
+          >
+            <Typography
+              variant="h5"
+              style={{ textAlign: "center", marginBottom: "10px" }}
+            >
+              {user?.is_renter
+                ? "Rezerwacje Twoich przedmiotów"
+                : "Twoje rezerwacje"}
             </Typography>
             {this.renderList("Rezerwacje", reservations, stroje, elementStroje)}
           </div>
@@ -666,19 +772,38 @@ class MainPage extends Component {
               Twoje stroje
             </Typography>
             {this.renderOwnedItems("stroje", this.state.allOwnedStroje)}
-            <Typography variant="h5" style={{ textAlign: "center", marginTop: "20px" }}>
+            <Typography
+              variant="h5"
+              style={{ textAlign: "center", marginTop: "20px" }}
+            >
               Twoje elementy stroju
             </Typography>
-            {this.renderOwnedItems("elementy stroju", this.state.allOwnedElementStroje)}
+            {this.renderOwnedItems(
+              "elementy stroju",
+              this.state.allOwnedElementStroje
+            )}
           </div>
         )}
 
         {/* Browse button for non-renters */}
         {!user?.is_renter && (
-          <div style={{ display: "flex", justifyContent: "center", marginTop: "40px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginTop: "40px",
+            }}
+          >
             <Button
               variant="contained"
-              style={{ backgroundColor: "#337ab7", color: "#fff", fontWeight: "bold", borderRadius: "12px", padding: "14px 24px", fontSize: "16px" }}
+              style={{
+                backgroundColor: "#337ab7",
+                color: "#fff",
+                fontWeight: "bold",
+                borderRadius: "12px",
+                padding: "14px 24px",
+                fontSize: "16px",
+              }}
               onClick={() => navigate("/reservations")}
             >
               Przeglądaj dostępne stroje
@@ -687,25 +812,35 @@ class MainPage extends Component {
         )}
 
         {/* Delete confirmation dialog */}
-        <Dialog open={deleteConfirmationOpen} onClose={() => this.closeDeleteConfirmation()}>
+        <Dialog
+          open={deleteConfirmationOpen}
+          onClose={() => this.closeDeleteConfirmation()}
+        >
           <DialogTitle>Potwierdzenie usunięcia</DialogTitle>
           <DialogContent>
-            <Typography>
-              Czy na pewno chcesz usunąć ten przedmiot?
-            </Typography>
+            <Typography>Czy na pewno chcesz usunąć ten przedmiot?</Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => this.closeDeleteConfirmation()} color="primary">
+            <Button
+              onClick={() => this.closeDeleteConfirmation()}
+              color="primary"
+            >
               Anuluj
             </Button>
-            <Button onClick={() => this.deleteItemConfirmed()} color="secondary">
+            <Button
+              onClick={() => this.deleteItemConfirmed()}
+              color="secondary"
+            >
               Tak
             </Button>
           </DialogActions>
         </Dialog>
 
         {/* Wydłuż dialog */}
-        <Dialog open={extendDialogOpen} onClose={() => this.setState({ extendDialogOpen: false })}>
+        <Dialog
+          open={extendDialogOpen}
+          onClose={() => this.setState({ extendDialogOpen: false })}
+        >
           <DialogTitle>Wydłuż wypożyczenie</DialogTitle>
           <DialogContent>
             <Typography>Na ile dni chcesz wydłużyć?</Typography>
@@ -713,12 +848,17 @@ class MainPage extends Component {
               type="number"
               min="1"
               value={extendDays}
-              onChange={(e) => this.setState({ extendDays: parseInt(e.target.value) || "" })}
+              onChange={(e) =>
+                this.setState({ extendDays: parseInt(e.target.value) || "" })
+              }
               style={{ width: "100%", marginTop: "10px", padding: "8px" }}
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => this.setState({ extendDialogOpen: false })} color="primary">
+            <Button
+              onClick={() => this.setState({ extendDialogOpen: false })}
+              color="primary"
+            >
               Anuluj
             </Button>
             <Button onClick={() => this.extendRental()} color="secondary">
@@ -737,7 +877,10 @@ class MainPage extends Component {
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={this.closeConfirmReservationDialog} color="default">
+            <Button
+              onClick={this.closeConfirmReservationDialog}
+              color="default"
+            >
               Anuluj
             </Button>
             <Button onClick={this.confirmReservation} color="primary">
@@ -754,7 +897,10 @@ class MainPage extends Component {
             <Typography>{this.state.errorMessage}</Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => this.setState({ errorMessage: "" })} color="primary">
+            <Button
+              onClick={() => this.setState({ errorMessage: "" })}
+              color="primary"
+            >
               Zamknij
             </Button>
           </DialogActions>
@@ -762,7 +908,6 @@ class MainPage extends Component {
       </div>
     );
   }
-
 }
 
 export default function MainPageWithNavigate(props) {

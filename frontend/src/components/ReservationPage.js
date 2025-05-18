@@ -12,7 +12,6 @@ import {
 import React, { Component } from "react";
 import { useNavigate } from "react-router-dom";
 
-// Wrapper for using useNavigate inside a class component
 function withNavigation(Component) {
   return function WrappedComponent(props) {
     const navigate = useNavigate();
@@ -55,7 +54,6 @@ class ReservationPage extends Component {
       "Content-Type": "application/json",
     };
 
-    // Get current user
     fetch("/api/user/me", { headers })
       .then((res) => res.json())
       .then((user) => {
@@ -66,7 +64,6 @@ class ReservationPage extends Component {
 
         this.setState({ user });
 
-        // Continue fetching data
         return Promise.all([
           fetch("/api/stroje/stroj/list", { headers }),
           fetch("/api/stroje/element/list", { headers }),
@@ -75,25 +72,28 @@ class ReservationPage extends Component {
       })
       .then(async ([costumeRes, elementRes, reservationRes]) => {
         if (!costumeRes.ok || !elementRes.ok || !reservationRes.ok) {
-          throw new Error("❌ Błąd pobierania strojów, elementów lub wypożyczeń");
+          throw new Error(
+            "❌ Błąd pobierania strojów, elementów lub wypożyczeń"
+          );
         }
 
-        const [costumesData, elementsData, reservationsData] = await Promise.all([
-          costumeRes.json(),
-          elementRes.json(),
-          reservationRes.json(),
-        ]);
+        const [costumesData, elementsData, reservationsData] =
+          await Promise.all([
+            costumeRes.json(),
+            elementRes.json(),
+            reservationRes.json(),
+          ]);
 
         const now = new Date();
-        const upcomingReservations = reservationsData.filter(rental => new Date(rental.zwrot) > now);
+        const upcomingReservations = reservationsData.filter(
+          (rental) => new Date(rental.zwrot) > now
+        );
 
         this.setState({
           costumes: costumesData,
           elements: elementsData,
           reservations: upcomingReservations,
         });
-
-        console.log("Fetched costumes:", costumesData);
       })
       .catch((err) => {
         console.error("❗ Error loading data:", err);
@@ -141,11 +141,7 @@ class ReservationPage extends Component {
     const relatedRentals = this.state.reservations.filter((rental) =>
       isElement ? rental.element_stroju === item.id : rental.stroj === item.id
     );
-
-    this.setState({
-      selectedRentals: relatedRentals,
-      rentalDialogOpen: true,
-    });
+    this.setState({ selectedRentals: relatedRentals, rentalDialogOpen: true });
   };
 
   handleCloseRentalDialog = () => {
@@ -178,7 +174,6 @@ class ReservationPage extends Component {
       return;
     }
 
-    // Check for date conflicts
     const conflicts = reservations.filter((rental) => {
       const isSameItem = isElement
         ? rental.element_stroju === itemToProcess.id
@@ -189,23 +184,21 @@ class ReservationPage extends Component {
       const start = new Date(rental.wypozyczono);
       const end = new Date(rental.zwrot);
 
-      // Check for overlap: A < new_end && B > new_start
       return wypozyczonoDate < end && rentalDate > start;
     });
 
     if (conflicts.length > 0) {
-      alert("Wybrane daty kolidują z istniejącym wypożyczeniem lub rezerwacją.");
+      alert(
+        "Wybrane daty kolidują z istniejącym wypożyczeniem lub rezerwacją."
+      );
       return;
     }
 
     const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Nie znaleziono tokenu użytkownika.");
-      return;
-    }
     const { user } = this.state;
-    if (!user || !user.id) {
-      alert("Nie znaleziono ID użytkownika.");
+
+    if (!user?.id || !token) {
+      alert("Brak danych użytkownika.");
       return;
     }
 
@@ -213,9 +206,8 @@ class ReservationPage extends Component {
       rezerwacja: dialogType === "reserve",
       wypozyczono: wypozyczonoDate.toISOString(),
       zwrot: rentalDate.toISOString(),
-      [isElement ? "element_stroju" : "stroj"]: itemToProcess.id
+      [isElement ? "element_stroju" : "stroj"]: itemToProcess.id,
     };
-
 
     try {
       const res = await fetch("/api/wypozyczenia/create/", {
@@ -232,15 +224,17 @@ class ReservationPage extends Component {
       if (!res.ok) throw new Error("Błąd podczas akcji.");
 
       const data = await res.json();
-      alert(`${dialogType === "reserve" ? "Rezerwacja" : "Wypożyczenie"} utworzono! ID: ${data.id}`);
-      this.setState({ showDialog: false, wypozyczonoDate: null, rentalDate: null });
-
+      alert(
+        `${
+          dialogType === "reserve" ? "Rezerwacja" : "Wypożyczenie"
+        } utworzono! ID: ${data.id}`
+      );
 
       const updatedReservations = await fetch("/api/wypozyczenia/list", {
         headers: { Authorization: `Token ${token}` },
       });
       const reservationsData = await updatedReservations.json();
-      this.setState({ reservations: reservationsData });
+      this.setState({ reservations: reservationsData, showDialog: false });
     } catch (error) {
       alert("Nie udało się wykonać akcji: " + error.message);
       this.setState({ showDialog: false });
@@ -253,12 +247,15 @@ class ReservationPage extends Component {
 
   handleElementTypeClick = (elementType) => {
     this.setState((prevState) => ({
-      selectedElementType: prevState.selectedElementType === elementType ? null : elementType,
+      selectedElementType:
+        prevState.selectedElementType === elementType ? null : elementType,
     }));
   };
 
   toggleCostumeView = () => {
-    this.setState((prevState) => ({ showFullCostume: !prevState.showFullCostume }));
+    this.setState((prevState) => ({
+      showFullCostume: !prevState.showFullCostume,
+    }));
   };
 
   handleGoBack = () => {
@@ -280,108 +277,213 @@ class ReservationPage extends Component {
     } = this.state;
 
     const elementCategories = [
-      "nakrycie_glowy", "koszula", "kamizelka", "akcesoria",
-      "bizuteria", "halka", "sukienka", "buty", "spodnie",
+      "nakrycie_glowy",
+      "koszula",
+      "kamizelka",
+      "akcesoria",
+      "bizuteria",
+      "halka",
+      "sukienka",
+      "buty",
+      "spodnie",
     ];
 
-
     const elementsInCostume = new Set();
-    costumes.forEach(costume => {
-      elementCategories.forEach(category => {
+    costumes.forEach((costume) => {
+      elementCategories.forEach((category) => {
         const id = costume[category];
-        if (id !== null && id !== undefined) {
-          elementsInCostume.add(id);
-        }
+        if (id != null) elementsInCostume.add(id);
       });
     });
-
-    // 🧠 DEBUG: show what element IDs are in use
-    console.log("Costumes fetched:", costumes);
-    console.log("Element IDs used in costumes:", Array.from(elementsInCostume));
 
     const filteredItems = showFullCostume
       ? costumes
       : elements.filter((item) => {
-        const isInCostume = elementsInCostume.has(item.id);
-        const matchesType = selectedElementType ? item.element_type === selectedElementType : true;
-        console.log(`Checking element "${item.name}" (ID: ${item.id}) -> in costume: ${isInCostume}, matchesType: ${matchesType}`);
-        return !isInCostume && matchesType;
-      });
+          const isInCostume = elementsInCostume.has(item.id);
+          const matchesType = selectedElementType
+            ? item.element_type === selectedElementType
+            : true;
+          return !isInCostume && matchesType;
+        });
 
     return (
-      <div style={{ backgroundColor: "#ffebcc", padding: "20px", minHeight: "100vh" }}>
-        <Button onClick={this.handleGoBack} variant="contained" color="secondary" style={{ marginBottom: "20px" }}>
-          Back
-        </Button>
-
-        <Button onClick={this.toggleCostumeView} variant="contained" style={{ backgroundColor: "#337ab7", color: "#fff", marginBottom: "20px" }}>
-          {showFullCostume ? "Pokaż elementy" : "Pokaż stroje"}
-        </Button>
-
-        {!showFullCostume && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "20px" }}>
-            {elementCategories.map((category) => (
-              <Button
-                key={category}
-                onClick={() => this.handleElementTypeClick(category)}
-                variant={selectedElementType === category ? "contained" : "outlined"}
-                color="primary"
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
-        )}
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "24px" }}>
-          {filteredItems.length === 0 ? (
-            <Typography variant="h6" style={{ gridColumn: "1 / -1", textAlign: "center", color: "#a52a2a" }}>
-              Brak dostępnych {showFullCostume ? "strojów" : "elementów stroju"} do wyświetlenia.
-            </Typography>
-          ) : (
-            filteredItems.map((item) => (
-              <Card key={item.id} style={{ backgroundColor: "#fff", borderRadius: "12px" }}>
-                <CardContent>
-                  <Typography variant="h6">{item.name}</Typography>
-                  <Typography variant="body2">{item.description}</Typography>
-                  <Button
-                    fullWidth
-                    style={{ marginTop: "10px", backgroundColor: "#337ab7", color: "#fff" }}
-                    onClick={() => this.handleReserve(item, !showFullCostume)}
-                  >
-                    Rezerwuj
-                  </Button>
-                  <Button
-                    fullWidth
-                    style={{ marginTop: "10px", backgroundColor: "#a52a2a", color: "#fff" }}
-                    onClick={() => this.handleRental(item, !showFullCostume)}
-                  >
-                    Wypożycz
-                  </Button>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    color="primary"
-                    style={{ marginTop: "10px" }}
-                    onClick={() => this.props.navigate(`/details/${showFullCostume ? "stroj" : "element"}/${item.id}`)}
-                  >
-                    Szczegóły
-                  </Button>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    style={{ marginTop: "10px", borderColor: "#4caf50", color: "#4caf50" }}
-                    onClick={() => this.handleShowRentals(item, !showFullCostume)}
-                  >
-                    Wypożyczenia
-                  </Button>
-                </CardContent>
-              </Card>
-            ))
-          )}
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "#ffebcc",
+        }}
+      >
+        {/* HEADER */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "20px",
+            backgroundColor: "#a52a2a",
+            borderRadius: "12px",
+            color: "#fff",
+            border: "3px solid #d4a373",
+          }}
+        >
+          <Typography variant="h4" style={{ flexGrow: 1, textAlign: "center" }}>
+            Dostępne stroje Ludowe
+          </Typography>
         </div>
 
-        {/* Reservation / Rental Dialog */}
+        <div style={{ padding: "20px", flex: "1" }}>
+          <Button
+            onClick={this.handleGoBack}
+            variant="contained"
+            style={{
+              marginBottom: "20px",
+              backgroundColor: "#d9534f",
+              color: "#fff",
+              border: "3px solid #d4a373",
+            }}
+            onMouseEnter={(e) => (e.target.style.backgroundColor = "#b52b27")}
+            onMouseLeave={(e) => (e.target.style.backgroundColor = "#d9534f")}
+          >
+            Wróć
+          </Button>
+
+          <Button
+            onClick={this.toggleCostumeView}
+            variant="contained"
+            style={{
+              backgroundColor: "#337ab7",
+              color: "#fff",
+              marginBottom: "20px",
+              border: "3px solid #d4a373",
+            }}
+            onMouseEnter={(e) => (e.target.style.backgroundColor = "#23527c")}
+            onMouseLeave={(e) => (e.target.style.backgroundColor = "#337ab7")}
+          >
+            {showFullCostume ? "Pokaż elementy" : "Pokaż stroje"}
+          </Button>
+
+          {!showFullCostume && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "10px",
+                marginBottom: "20px",
+              }}
+            >
+              {elementCategories.map((category) => (
+                <Button
+                  key={category}
+                  onClick={() => this.handleElementTypeClick(category)}
+                  variant={
+                    selectedElementType === category ? "contained" : "outlined"
+                  }
+                  color="primary"
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
+          )}
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+              gap: "24px",
+              backgroundColor: "rgba(0, 0, 0, 0.1)",
+              padding: "20px",
+              borderRadius: "12px",
+              border: "3px solid #d4a373",
+              marginBottom: "30px",
+            }}
+          >
+            {filteredItems.length === 0 ? (
+              <Typography
+                style={{
+                  gridColumn: "1 / -1",
+                  textAlign: "center",
+                  color: "#a52a2a",
+                }}
+              >
+                Brak dostępnych{" "}
+                {showFullCostume ? "strojów" : "elementów stroju"} do
+                wyświetlenia.
+              </Typography>
+            ) : (
+              filteredItems.map((item) => (
+                <Card
+                  key={item.id}
+                  style={{
+                    backgroundColor: "#ffebcc",
+                    borderRadius: "12px",
+                    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                  }}
+                >
+                  <CardContent>
+                    <Typography variant="h6">{item.name}</Typography>
+                    <Typography variant="body2">{item.description}</Typography>
+                    <Button
+                      fullWidth
+                      style={{
+                        marginTop: "10px",
+                        backgroundColor: "#337ab7",
+                        color: "#fff",
+                      }}
+                      onClick={() => this.handleReserve(item, !showFullCostume)}
+                    >
+                      Rezerwuj
+                    </Button>
+                    <Button
+                      fullWidth
+                      style={{
+                        marginTop: "10px",
+                        backgroundColor: "#a52a2a",
+                        color: "#fff",
+                      }}
+                      onClick={() => this.handleRental(item, !showFullCostume)}
+                    >
+                      Wypożycz
+                    </Button>
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      color="primary"
+                      style={{ marginTop: "10px" }}
+                      onClick={() =>
+                        this.props.navigate(
+                          `/details/${showFullCostume ? "stroj" : "element"}/${
+                            item.id
+                          }`
+                        )
+                      }
+                    >
+                      Szczegóły
+                    </Button>
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      style={{
+                        marginTop: "10px",
+                        borderColor: "#4caf50",
+                        color: "#4caf50",
+                      }}
+                      onClick={() =>
+                        this.handleShowRentals(item, !showFullCostume)
+                      }
+                    >
+                      Wypożyczenia
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* DIALOGI */}
         <Dialog open={showDialog} onClose={this.cancelAction}>
           <DialogTitle>Potwierdzenie</DialogTitle>
           <DialogContent>
@@ -391,26 +493,52 @@ class ReservationPage extends Component {
               label="Data wypożyczenia"
               fullWidth
               InputLabelProps={{ shrink: true }}
-              value={wypozyczonoDate ? wypozyczonoDate.toISOString().slice(0, 16) : ""}
-              onChange={(e) => this.setState({ wypozyczonoDate: new Date(e.target.value) })}
+              value={
+                wypozyczonoDate
+                  ? new Date(
+                      wypozyczonoDate.getTime() -
+                        wypozyczonoDate.getTimezoneOffset() * 60000
+                    )
+                      .toISOString()
+                      .slice(0, 16)
+                  : ""
+              }
+              onChange={(e) =>
+                this.setState({ wypozyczonoDate: new Date(e.target.value) })
+              }
             />
-            <br /><br />
+            <br />
+            <br />
             <TextField
               type="datetime-local"
               label="Data zwrotu"
               fullWidth
               InputLabelProps={{ shrink: true }}
-              value={rentalDate ? rentalDate.toISOString().slice(0, 16) : ""}
-              onChange={(e) => this.setState({ rentalDate: new Date(e.target.value) })}
+              value={
+                rentalDate
+                  ? new Date(
+                      rentalDate.getTime() -
+                        rentalDate.getTimezoneOffset() * 60000
+                    )
+                      .toISOString()
+                      .slice(0, 16)
+                  : ""
+              }
+              onChange={(e) =>
+                this.setState({ rentalDate: new Date(e.target.value) })
+              }
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={this.cancelAction} color="secondary">Anuluj</Button>
-            <Button onClick={this.confirmAction} color="primary">Potwierdź</Button>
+            <Button onClick={this.cancelAction} color="secondary">
+              Anuluj
+            </Button>
+            <Button onClick={this.confirmAction} color="primary">
+              Potwierdź
+            </Button>
           </DialogActions>
         </Dialog>
 
-        {/* Rental List Dialog */}
         <Dialog open={rentalDialogOpen} onClose={this.handleCloseRentalDialog}>
           <DialogTitle>Lista wypożyczeń</DialogTitle>
           <DialogContent>
@@ -429,7 +557,9 @@ class ReservationPage extends Component {
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={this.handleCloseRentalDialog} color="primary">Zamknij</Button>
+            <Button onClick={this.handleCloseRentalDialog} color="primary">
+              Zamknij
+            </Button>
           </DialogActions>
         </Dialog>
       </div>
