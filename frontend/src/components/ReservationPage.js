@@ -318,18 +318,17 @@ class ReservationPage extends Component {
         {/* HEADER */}
         <div
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
             padding: "20px",
+            margin: "10px",
             backgroundColor: "#a52a2a",
             borderRadius: "12px",
             color: "#fff",
             border: "3px solid #d4a373",
+            textAlign: "center",
           }}
         >
-          <Typography variant="h4" style={{ flexGrow: 1, textAlign: "center" }}>
-            Dostępne stroje Ludowe
+          <Typography variant="h4" style={{ margin: 0 }}>
+            Dostępne elementy i stroje ludowe
           </Typography>
         </div>
 
