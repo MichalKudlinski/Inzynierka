@@ -91,11 +91,11 @@ const HomePage = () => {
         </Typography>
       </div>
 
-      <div style={{     
-      gridArea: "signup",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
+      <div style={{
+        gridArea: "signup",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}>
         <HoverButton
           text="Załóż konto"
@@ -105,11 +105,12 @@ const HomePage = () => {
         />
       </div>
 
-      <div style={{ 
-      gridArea: "login",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center", }}>
+      <div style={{
+        gridArea: "login",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}>
         <HoverButton
           text="Zaloguj"
           bgColor="#337ab7"
@@ -142,15 +143,30 @@ const HomePage = () => {
       >
         <h2>Informacje z Polskiego Folku</h2>
         {wiadomosci.length > 0 ? (
-          <ul style={{ marginTop: "10px", paddingLeft: "20px", textAlign: "left" }}>
+          <ul
+            style={{
+              marginTop: "10px",
+              paddingLeft: "20px",
+              textAlign: "left",
+              listStylePosition: "inside",
+            }}
+          >
             {wiadomosci.map((msg) => (
-              <li key={msg.id}>
+              <li
+                key={msg.id}
+                style={{
+                  marginBottom: "12px",    // <-- add space here
+                  lineHeight: 1.5,        // optional: improve readability
+                }}
+              >
                 <strong>{msg.name}</strong> — {msg.text}
               </li>
             ))}
           </ul>
         ) : (
-          <p style={{ fontStyle: "italic", marginTop: "10px" }}>Brak wiadomości z ostatnich 30 dni.</p>
+          <p style={{ fontStyle: "italic", marginTop: "10px" }}>
+            Brak wiadomości z ostatnich 30 dni.
+          </p>
         )}
       </div>
 

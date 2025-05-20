@@ -48,17 +48,17 @@ admin.site.register(models.User, UserAdmin)
 
 @admin.register(models.ElementStroju)
 class ElementStrojuAdmin(admin.ModelAdmin):
-    list_display = ['id', 'extid','name', 'size', 'user', 'city','element_type', 'gender']
-    search_fields = ['name', 'element_type', 'gender','image']
-    list_filter = ['element_type', 'gender']
+    list_display = ['id', 'extid','name', 'size', 'user', 'city','element_type', 'gender','confirmed']
+    search_fields = ['name', 'element_type', 'gender','image', 'confirmed']
+    list_filter = ['element_type', 'gender','confirmed']
 
 @admin.register(models.Stroj)
 class StrojAdmin(admin.ModelAdmin):
     list_display = ['id', 'extid', 'name','city', 'gender', 'user',
                     'nakrycie_glowy', 'koszula', 'spodnie', 'kamizelka',
-                    'buty', 'akcesoria', 'bizuteria', 'halka', 'sukienka','image']
+                    'buty', 'akcesoria', 'bizuteria', 'halka', 'sukienka','image', 'confirmed']
     search_fields = ['name', 'gender']
-    list_filter = ['gender', 'nakrycie_glowy', 'koszula', 'spodnie', 'kamizelka', 'buty', 'akcesoria', 'bizuteria', 'halka', 'sukienka']
+    list_filter = ['gender', 'nakrycie_glowy', 'koszula', 'spodnie', 'kamizelka', 'buty', 'akcesoria', 'bizuteria', 'halka', 'sukienka','confirmed']
     readonly_fields = ['extid']
 
 @admin.register(models.Wypozyczenie)
@@ -105,3 +105,14 @@ class WiadomosciAdmin(admin.ModelAdmin):
     def short_text(self, obj):
         return (obj.text[:50] + '...') if len(obj.text) > 50 else obj.text
     short_text.short_description = 'Text Preview'
+
+@admin.register(models.WiadomosciKontrol)
+class WiadomosciKontrolAdmin(admin.ModelAdmin):
+    list_display    = ['id', 'name', 'user', 'created_at']
+    search_fields   = ['name', 'user__email']
+    list_filter     = ['name', 'created_at']
+    readonly_fields = ['created_at']
+
+    def user_email(self, obj):
+        return obj.user.email
+    user_email.short_description = 'User Email'

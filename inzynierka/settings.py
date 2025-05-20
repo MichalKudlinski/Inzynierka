@@ -153,15 +153,13 @@ REST_FRAMEWORK = {
 }
 
 CORS_ALLOW_ALL_ORIGINS = True
-CRONJOBS = [
-    ('*/10 * * * *', 'inzynierka.cron.CheckWypozyczenieCronJob'),
-]
+
 # EMAIL REAL
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'kudlinski.test@gmail.com'
-EMAIL_HOST_PASSWORD = 'nfyd teqf hmlk wfec'
+EMAIL_HOST_USER = 'heritage.wear.kontakt@gmail.com'
+EMAIL_HOST_PASSWORD = 'aylb inbk rhwi gdwm'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 

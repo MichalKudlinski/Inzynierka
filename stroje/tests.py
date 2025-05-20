@@ -107,7 +107,7 @@ class StrojApiTests(TestCase):
         self.user = create_user()
         self.client.force_authenticate(user=self.user)
 
-        # Create some elements to assign to stroj
+
         self.koszula = ElementStroju.objects.create(
             name="Koszula Biała",
             description="Opis",

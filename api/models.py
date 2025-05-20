@@ -4,6 +4,7 @@ import os
 from django.conf import settings
 from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
                                         PermissionsMixin)
+from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage, send_mail
 from django.db import models
 
@@ -52,16 +53,18 @@ class User(AbstractBaseUser, PermissionsMixin):
         USERNAME_FIELD = 'name'
         REQUIRED_FIELDS = ['email']
         def save(self, *args, **kwargs):
+
             is_new = self.pk is None
             super().save(*args, **kwargs)
             if  self.is_renter and is_new:
                 subject = "Dziękujemy za rejestrację!"
-                message = "Dzień dobry, dziekujemy za rejestrację w naszym serwisie." \
-                "Instrukcja dodawania swoich strojów, umożliwiając tym samym ich wypożyczenie innym użytkownikom:" \
-                "1. W szablonie pliku excel znajdującym się w załączniku proszę wypełnić dane na temat strojów i poszczególnych elementów" \
-                "2. Wypełnione pliki excel proszę o odesłanie na mail: heritage_wear@gmail.com wraz zdjęciami poszczególnych" \
-                "czesci garderoby, nazwy plików zdjęć powinny odpowiadać nazwom produktów zawartym w plikach excel."
-                from_email = "kudlinski.test@gmail.com"
+                message =( f"Hej {self.name}, dziekujemy za rejestrację w naszym serwisie!\n\n"
+                f"Instrukcja dodawania swoich strojów, umożliwiając tym samym ich wypożyczenie innym użytkownikom:\n\n" \
+                f"1. W szablonie pliku excel znajdującym się w załączniku proszę wypełnić dane na temat strojów i poszczególnych elementów\n" \
+                f"2. Wypełnione pliki excel proszę o odesłanie na mail: heritage_wear@gmail.com wraz ze zdjęciami poszczególnych\n" \
+                f"części garderoby, nazwy plików zdjęć powinny odpowiadać nazwom produktów zawartych w plikach excel.\n\n"
+                f"Pozdrawiamy,\nHeritageWear.pl " )
+                from_email = "heritage.wear.kontakt@gmail.com"
                 recipient_list = ['michal.kudlinski@gmail.com']
                 email = EmailMessage(subject, message, from_email, recipient_list)
 
@@ -96,9 +99,9 @@ class ElementStroju(models.Model):
     city = models.CharField(max_length=255)
 
     description = models.TextField(blank=True)
-
+    confirmed = models.BooleanField(default=False)
     ELEMENT_TYPES = [
-        ('nakrycie głowy', 'Nakrycie Głowy'),
+        ('nakrycie glowy', 'Nakrycie Glowy'),
         ('koszula', 'Koszula'),
         ('spodnie', 'Spodnie'),
         ('kamizelka', 'Kamizelka'),
@@ -133,7 +136,28 @@ class ElementStroju(models.Model):
 
     def __str__(self):
         return f"{self.name}"
+    def save(self, *args, **kwargs):
 
+        if not getattr(self.user, "is_renter", False):
+            raise ValidationError(
+                "Użytkownik nie ma uprawnień wynajmującego (is_renter must be True)."
+            )
+        is_new = self._state.adding
+
+
+        super().save(*args, **kwargs)
+
+        if is_new and self.user and getattr(self.user, 'email', None):
+            subject = f"Nowy element stroju dodany: {self.name}"
+            message = (
+                f"Hej {self.user.name},\n\n"
+                f"Do systemu został właśnie dodany nowy element stroju, którego jesteś właścicielem o nazwie: “{self.name}”.\n"
+                f"Ten element stroju tym samym staje się dostępny do wypożyczenia i rezerwacji dla innych użytkownikoów.\n\n"
+                "Pozdrawiamy,\nHeritageWear.pl "
+            )
+            from_email = "heritage.wear.kontakt@gmail.com"
+            recipient_list = ["michal.kudlinski@gmail.com"]
+            send_mail(subject, message, from_email, recipient_list)
 
 
 class Stroj(models.Model):
@@ -179,10 +203,35 @@ class Stroj(models.Model):
     bizuteria = models.ForeignKey('ElementStroju', related_name='bizuteria', on_delete=models.CASCADE, blank=True, null=True)
     halka = models.ForeignKey('ElementStroju', related_name='halka', on_delete=models.CASCADE, blank=True, null=True)
     sukienka = models.ForeignKey('ElementStroju', related_name='sukienka', on_delete=models.CASCADE, blank=True, null=True)
+    confirmed = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Stroj: {self.name}"
 
+    def save(self, *args, **kwargs):
+
+        if not getattr(self.user, "is_renter", False):
+            raise ValidationError(
+                "Użytkownik nie ma uprawnień wynajmującego (is_renter must be True)."
+            )
+
+        is_new = self._state.adding
+
+        # Perform the actual save (this will assign self.pk if new)
+        super().save(*args, **kwargs)
+
+        # If it was new, and user/email exist, send notification
+        if is_new and self.user and getattr(self.user, "email", None):
+            subject = f"Nowy strój dodany: {self.name}"
+            message = (
+                f"Hej {self.user.name},\n\n"
+                f"Do systemu został właśnie dodany nowy strój, którego jesteś właścicielem o nazwie: “{self.name}”.\n"
+                f"Ten strój tym samym staje się dostępny do wypożyczenia i rezerwacji dla innych użytkownikoów.\n\n"
+                "Pozdrawiamy,\nHeritageWear.pl"
+            )
+            from_email = "heritage.wear.kontakt@gmail.com"
+            recipient_list = ["michal.kudlinski@gmail.com"]
+            send_mail(subject, message, from_email, recipient_list)
 
 class Wypozyczenie(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -225,39 +274,89 @@ class Wypozyczenie(models.Model):
                 name = self.element_stroju.name if self.element_stroju else self.stroj.name
                 if not self.rezerwacja:  # Only modify the email body if reservation is False
 
-                    message = f"""Dzień dobry,
-                                  Ten email jest potwierdzeniem wypożyczenia : {name}.
-                                  Data rozpoczęcia wypożyczenia: {wypozyczono}
-                                  Data zwrotu: {zwrot}
-                                  Miasto właściciela: {city}
-                                  Sposób przekazania stroju i warunki jego wypożyczenia proszę ustalić
-                                  bezpośrednio z właścicielem stroju / elementu stroju.
-                                  Numer właściciela: {user_phone_number if user_phone_number else 'Brak numeru telefonu właściciela'}
-                                  Pozdrawiamy,
-                                  HeritageWear
-                                """
+                    message = ( f"Cześć {self.user.name},\n\n"
+                              f"Ten email jest potwierdzeniem wypożyczenia : {name}\n."
+                              f"• Data rozpoczęcia wypożyczenia: {wypozyczono}\n"
+                              f"• Data zwrotu: {zwrot}\n"
+                              f"• Miasto właściciela: {city}\n"
+                              f"• Numer właściciela: {user_phone_number if user_phone_number else 'Brak numeru telefonu właściciela'}\n"
+                              f"Sposób przekazania stroju i warunki jego wypożyczenia proszę ustalić bezpośrednio z właścicielem stroju / elementu stroju.\n\n"
+                              f"Pozdrawiamy,\nHeritageWear.pl" )
+
                 else:
-                    essage = f"""Dzień dobry,
-                                  Ten email jest potwierdzeniem rezerwacji : {name}.
-                                  Data rozpoczęcia rezerwacji: {wypozyczono}
-                                  Data końca rezerwacji: {zwrot}
-                                  Miasto właściciela: {city}
-                                  Ma Pan/ Pani 7 dni na potwierdzenie drogą mailową chęci wypożyczenia stroju w podanym w rezerwacji terminie.
-                                  W tytule maila proszę podać numer rezerwacji a w treści napisać Imię Naziwsko i Potwierdzam.
-                                  Pozdrawiamy,
-                                  HeritageWear
-                                """
+                    message = ( f"Cześć {self.user.name},\n\n"
+                                f"Ten email jest potwierdzeniem rezerwacji: {name}\n"
+                                f"• Data rozpoczęcia rezerwacji: {wypozyczono}\n"
+                                f"• Data zakończenia rezerwacji: {zwrot}\n"
+                                f"• Miasto właściciela: {city}\n\n"
+                                "Masz 7 dni na potwierdzenie chęci wypożyczenia stroju w podanym terminie.\n"
+                                "Potwierdzenia rezerwcji możesz dokonać na stronie głównej heritage-wear.pl”.\n\n"
+                                "Pozdrawiamy,\n"
+                                "HeritageWear.pl"
+)
                 # Send confirmation email
                 send_mail(
                     subject="Potwierdzenie Wypożyczenia",
                     message=message,
-                    from_email="kudlinski.test@gmail.com",
+                    from_email="heritage.wear.kontakt@gmail.com",
                     recipient_list=['michal.kudlinski@gmail.com'],  # This can be updated as needed
                     fail_silently=False,
                 )
                 print(f"Email sent successfully for Wypozyczenie ID={self.id}")
         except Exception as e:
             print(f"Error occurred while saving Wypozyczenie ID={self.id}: {e}")
+    def delete(self, using=None, keep_parents=False):
+        # figure out which element name we’re talking about
+        if self.stroj and self.stroj.user:
+            element_name = self.stroj.name
+        elif self.element_stroju and self.element_stroju.user:
+            element_name = self.element_stroju.name
+        else:
+            element_name = "nieznany przedmiot"
+
+        # Send to renter
+        try:
+            send_mail(
+                subject=f"Hej {self.user.name}, Twoje wypożyczenie zostało anulowane",
+                message=(
+                    f"Cześć {self.user.name},\n\n"
+                    f"Twoje wypożyczenie przedmiotu “{element_name}” (ID {self.id}) "
+                    f"od dnia {self.wypozyczono.strftime('%Y-%m-%d')} "
+                    f"do dnia {self.zwrot.strftime('%Y-%m-%d')} zostało anulowane.\n\n"
+                    "Pozdrawiamy,\nHeritageWear.pl"
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=["michal.kudlinski@gmail.com"],
+            )
+        except Exception as e:
+            print(f"Failed to send cancellation email to renter {self.user.email}: {e}")
+            # if you want to abort the delete on e‑mail failure, uncomment:
+            # raise
+
+        # Send to owner
+        owner = (self.stroj or self.element_stroju).user
+        try:
+            send_mail(
+                subject=f"Zwrot przedmiotu “{element_name}” anulowany",
+                message=(
+                    f"Cześć {owner.name},\n\n"
+                    f"Użytkownik {self.user.name} ({self.user.email}) anulował wypożyczenie "
+                    f"Twojego przedmiotu “{element_name}” (ID {self.id}).\n"
+                    f"Termin wypożyczenia: {self.wypozyczono.strftime('%Y-%m-%d')} "
+                    f"– {self.zwrot.strftime('%Y-%m-%d')}.\n\n"
+                    "Przedmiot jest teraz dostępny do ponownego wypożyczenia w tym czasie.\n\n"
+                    "Pozdrawiamy,\nHeritageWear.pl"
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=["michal.kudlinski@gmail.com"],
+            )
+        except Exception as e:
+            print(f"Failed to send cancellation email to owner {owner.email}: {e}")
+            # raise  # if you want to prevent delete on failure
+
+        # finally, delete the record
+        super().delete(using=using, keep_parents=keep_parents)
+
 
 
 class Image(models.Model):
@@ -279,4 +378,9 @@ class Wiadomosci(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.created_at.strftime('%Y-%m-%d %H:%M')})"
+
+class WiadomosciKontrol(models.Model):
+    name = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey('User', on_delete=models.CASCADE)
 

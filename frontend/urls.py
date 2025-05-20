@@ -10,4 +10,5 @@ urlpatterns = [
     path("reservations", index),
     path("details", index),
     path("details/<str:type>/<int:id>", index),
+    path("dodaj",index),
 ]

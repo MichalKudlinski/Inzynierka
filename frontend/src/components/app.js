@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import ReactDOM from "react-dom/client";
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+
+import AddPage from "./AddPage"; // ✅ Added import
 import DetailPage from "./DetailPage";
 import HomePage from "./HomePage";
 import LoginPage from "./LoginPage";
@@ -19,6 +21,7 @@ export default class App extends Component {
                     <Route path="/main" element={<MainPageWithNavigate />} />
                     <Route path="/reservations" element={<ReservationPage />} />
                     <Route path="/details/:type/:id" element={<DetailPage />} />
+                    <Route path="/dodaj" element={<AddPage />} /> {/* ✅ Added AddPage route */}
                 </Routes>
             </Router>
         );

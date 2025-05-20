@@ -1,9 +1,11 @@
 import json
+from datetime import timedelta
 
 from django.contrib import auth
 from django.core.mail import send_mail
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import (csrf_exempt, csrf_protect,
@@ -20,7 +22,7 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
-from api.models import User
+from api.models import User, WiadomosciKontrol
 from user.serializers import AuthTokenSerializer, UserSerializer
 
 # Create your views here.
@@ -65,6 +67,18 @@ def reset_password(request):
             except User.DoesNotExist:
                 return JsonResponse({"error": "Brak użytkownika z takim adresem email."}, status=404)
 
+            seven_days_ago = timezone.now() - timedelta(days=7)
+            recent = WiadomosciKontrol.objects.filter(
+            user=user,
+            name="password_reset",
+            created_at__gte=seven_days_ago
+            ).exists()
+
+            if recent:
+                return JsonResponse({
+                "error": "Hasło było już resetowane w ciągu ostatnich 7 dni."
+            }, status=429)
+
             new_password = get_random_string(10)
             user.set_password(new_password)
             print(new_password)
@@ -72,11 +86,18 @@ def reset_password(request):
 
             send_mail(
                 "Reset hasła",
-                f"Cześć {user.name}, Twoje nowe hasło to: {new_password}",
-                "no-reply@example.com",
-                [user.email],
+                message = (f"Cześć {user.name},\n"
+                           f"Twoje nowe hasło to: {new_password}.\n"
+                           f"Pamiętaj, że swoje hasło możesz resetować raz na 7 dni.\n\n"
+                           f"Pozdrawiamy,\nHeritageWear.pl"),
+                from_email="heritage.waer.kontakt@gmail.com",
+                recipient_list=["michal.kudlinski@gmail.com"],
                 fail_silently=False,
             )
+            WiadomosciKontrol.objects.create(
+            name="password_reset",
+            user=user
+        )
 
             return JsonResponse({"message": "Nowe hasło zostało wysłane na Twój email."})
         except Exception as e:

@@ -14,6 +14,13 @@ class CreateElementStrojuView(generics.CreateAPIView):
         """Tworzenie nowego elementu stroju w systemie"""
         permission_classes = (AllowAny,)
         serializer_class = ElementStrojuSerializer
+        def post(self, request, *args, **kwargs):
+            serializer = self.get_serializer(data=request.data, context={"request": request})
+            if not serializer.is_valid():
+                print("Validation errors:", serializer.errors)  # 👈 Debug output
+                return Response(serializer.errors, status=400)
+            self.perform_create(serializer)
+            return Response(serializer.data, status=201)
 
 class ListElementStrojuView(generics.ListAPIView):
         """Listowanie elementow stroju"""
