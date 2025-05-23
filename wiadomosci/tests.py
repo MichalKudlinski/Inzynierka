@@ -2,7 +2,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from api.models import Wiadomosci
+from api.models import News
 
 CREATE_URL = reverse('wiadomosc-create')
 LIST_URL = reverse('wiadomosc-list')
@@ -10,7 +10,7 @@ LIST_URL = reverse('wiadomosc-list')
 class TestWiadomosciAPI(APITestCase):
 
     def setUp(self):
-        self.wiadomosc = Wiadomosci.objects.create(
+        self.wiadomosc = News.objects.create(
             name='Test User',
             text='This is a test message.'
         )
@@ -23,8 +23,8 @@ class TestWiadomosciAPI(APITestCase):
         res = self.client.post(CREATE_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Wiadomosci.objects.count(), 2)
-        self.assertEqual(Wiadomosci.objects.last().name, payload['name'])
+        self.assertEqual(News.objects.count(), 2)
+        self.assertEqual(News.objects.last().name, payload['name'])
 
     def test_list_wiadomosci(self):
         res = self.client.get(LIST_URL)
@@ -58,4 +58,4 @@ class TestWiadomosciAPI(APITestCase):
         res = self.client.delete(url)
 
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(Wiadomosci.objects.filter(id=self.wiadomosc.id).exists())
+        self.assertFalse(News.objects.filter(id=self.wiadomosc.id).exists())

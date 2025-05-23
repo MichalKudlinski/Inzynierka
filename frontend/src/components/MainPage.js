@@ -9,11 +9,11 @@ class MainPage extends Component {
       user: null,
       rentals: [],
       reservations: [],
-      stroje: [],
-      elementStroje: [],
+      costumes: [],
+      elements: [],
       errorMessage: "",
-      allOwnedStroje: [],
-      allOwnedElementStroje: [],
+      allOwnedCostumes: [],
+      allOwnedElements: [],
       deleteConfirmationOpen: false,
       itemToDelete: null,
       extendDialogOpen: false,
@@ -47,6 +47,7 @@ class MainPage extends Component {
         this.setState({ user });
 
         if (user.is_renter) {
+          this.handleSendReminders(); // <-- Call send_reminders API here
           this.fetchRenterData(headers);
         } else {
           this.fetchNonRenterData(headers, user.id);
@@ -67,11 +68,11 @@ class MainPage extends Component {
     }
 
     // Check if item is currently rented or reserved
-    const hasCurrentOrFutureRental = [...rentals, ...reservations].some((wypozyczenie) => {
-      if (itemToDelete.type === "stroj") {
-        return wypozyczenie.stroj === itemToDelete.id;
-      } else if (itemToDelete.type === "element_stroju") {
-        return wypozyczenie.element_stroju === itemToDelete.id;
+    const hasCurrentOrFutureRental = [...rentals, ...reservations].some((rental) => {
+      if (itemToDelete.type === "costume") {
+        return rental.costume === itemToDelete.id;
+      } else if (itemToDelete.type === "element") {
+        return rental.element === itemToDelete.id;
       }
       return false;
     });
@@ -91,9 +92,9 @@ class MainPage extends Component {
     };
 
     let url = "";
-    if (itemToDelete.type === "stroj") {
+    if (itemToDelete.type === "costume") {
       url = `/api/costumes/costume${itemToDelete.id}/delete`;
-    } else if (itemToDelete.type === "element_stroju") {
+    } else if (itemToDelete.type === "element") {
       url = `/api/costumes/element${itemToDelete.id}/delete`;
     } else {
       url = `/api/rentals/${itemToDelete.id}/delete`;
@@ -115,10 +116,10 @@ class MainPage extends Component {
           itemToDelete: null,
         };
 
-        if (itemToDelete.type === "stroj") {
-          updatedState.allOwnedStroje = prevState.allOwnedStroje.filter((s) => s.id !== itemToDelete.id);
-        } else if (itemToDelete.type === "element_stroju") {
-          updatedState.allOwnedElementStroje = prevState.allOwnedElementStroje.filter((e) => e.id !== itemToDelete.id);
+        if (itemToDelete.type === "costume") {
+          updatedState.allOwnedCostumes = prevState.allOwnedCostumes.filter((s) => s.id !== itemToDelete.id);
+        } else if (itemToDelete.type === "element") {
+          updatedState.allOwnedElements = prevState.allOwnedElements.filter((e) => e.id !== itemToDelete.id);
         } else {
           updatedState.rentals = prevState.rentals.filter((r) => r.id !== itemToDelete.id);
           updatedState.reservations = prevState.reservations.filter((r) => r.id !== itemToDelete.id);
@@ -192,50 +193,50 @@ class MainPage extends Component {
 
   async fetchRenterData(headers) {
     try {
-      const [strojeRes, elementStrojeRes] = await Promise.all([
+      const [costumesRes, elementsRes] = await Promise.all([
         fetch("/api/costumes/costume/list", { headers }),
         fetch("/api/costumes/element/list", { headers }),
       ]);
 
-      const [stroje, elementStroje] = await Promise.all([
-        strojeRes.json(),
-        elementStrojeRes.json(),
+      const [costumes, elements] = await Promise.all([
+        costumesRes.json(),
+        elementsRes.json(),
       ]);
 
-      this.setState({ stroje, elementStroje });
+      this.setState({ costumes, elements });
 
-      const wypozyczeniaRes = await fetch(
+      const rentalsRes = await fetch(
         "/api/rentals/list",
         { headers }
       );
-      const allWypozyczenia = await wypozyczeniaRes.json();
+      const allRentals = await rentalsRes.json();
 
-      const filtered = allWypozyczenia.filter((wypozyczenie) => {
-        const strojObj = stroje.find((s) => s.id === wypozyczenie.stroj);
-        const elementStrojObj = elementStroje.find(
-          (e) => e.id === wypozyczenie.element_stroju
+      const filtered = allRentals.filter((rental) => {
+        const costumeObj = costumes.find((s) => s.id === rental.costume);
+        const elementsObj = elements.find(
+          (e) => e.id === rental.element
         );
         return (
-          (strojObj?.user === this.state.user.id ||
-            elementStrojObj?.user === this.state.user.id) &&
-          this.isCurrentOrFuture(wypozyczenie)
+          (costumeObj?.user === this.state.user.id ||
+            elementsObj?.user === this.state.user.id) &&
+          this.isCurrentOrFuture(rental)
         );
       });
 
-      const wypozyczenia = filtered.reduce(
-        (acc, wypozyczenie) => {
-          if (wypozyczenie.rezerwacja) acc.reservations.push(wypozyczenie);
-          else acc.rentals.push(wypozyczenie);
+      const rental = filtered.reduce(
+        (acc, rental) => {
+          if (rental.reservation) acc.reservations.push(rental);
+          else acc.rentals.push(rental);
           return acc;
         },
         { rentals: [], reservations: [] }
       );
 
       this.setState({
-        rentals: wypozyczenia.rentals,
-        reservations: wypozyczenia.reservations,
-        allOwnedStroje: stroje.filter((s) => s.user === this.state.user.id),
-        allOwnedElementStroje: elementStroje.filter(
+        rentals: rental.rentals,
+        reservations: rental.reservations,
+        allOwnedCostumes: costumes.filter((s) => s.user === this.state.user.id),
+        allOwnedElements: elements.filter(
           (e) => e.user === this.state.user.id
         ),
       });
@@ -246,53 +247,53 @@ class MainPage extends Component {
 
   async fetchNonRenterData(headers, userId) {
     try {
-      const [strojeRes, elementStrojeRes] = await Promise.all([
+      const [costumeRes, elementRes] = await Promise.all([
         fetch("/api/costumes/costume/list", { headers }),
         fetch("/api/costumes/element/list", { headers }),
       ]);
 
-      const [stroje, elementStroje] = await Promise.all([strojeRes.json(), elementStrojeRes.json()]);
+      const [costumes, elements] = await Promise.all([costumeRes.json(), elementRes.json()]);
 
-      const wypozyczeniaRes = await fetch(
+      const rentalsRes = await fetch(
         "/api/rentals/list",
         { headers }
       );
-      const wypozyczenia = await wypozyczeniaRes.json();
+      const rentals = await rentalsRes.json();
 
-      const filteredWypozyczenia = wypozyczenia.filter((wypozyczenie) => {
-        const isDirectUser = wypozyczenie.user === userId;
+      const filteredRentals = rentals.filter((rental) => {
+        const isDirectUser = rental.user === userId;
 
-        const strojUser =
-          typeof wypozyczenie.stroj === "object"
-            ? wypozyczenie.stroj?.user
-            : stroje.find((s) => s.id === wypozyczenie.stroj)?.user;
+        const costumeUser =
+          typeof rental.costume === "object"
+            ? rental.costume?.user
+            : costumes.find((s) => s.id === rental.costume)?.user;
 
-        const elementStrojUser =
-          typeof wypozyczenie.element_stroju === "object"
-            ? wypozyczenie.element_stroju?.user
-            : elementStroje.find((e) => e.id === wypozyczenie.element_stroju)
+        const elementUser =
+          typeof rental.element === "object"
+            ? rental.element?.user
+            : elements.find((e) => e.id === rental.element)
               ?.user;
 
         return (
-          (isDirectUser || strojUser === userId || elementStrojUser === userId) &&
-          this.isCurrentOrFuture(wypozyczenie)
+          (isDirectUser || costumeUser === userId || elementUser === userId) &&
+          this.isCurrentOrFuture(rental)
         );
       });
 
-      const splitWypozyczenia = filteredWypozyczenia.reduce(
-        (acc, wypozyczenie) => {
-          if (wypozyczenie.rezerwacja) acc.reservations.push(wypozyczenie);
-          else acc.rentals.push(wypozyczenie);
+      const splitRentals = filteredRentals.reduce(
+        (acc, rental) => {
+          if (rental.reservation) acc.reservations.push(rental);
+          else acc.rentals.push(rental);
           return acc;
         },
         { rentals: [], reservations: [] }
       );
 
       this.setState({
-        stroje,
-        elementStroje,
-        rentals: splitWypozyczenia.rentals,
-        reservations: splitWypozyczenia.reservations,
+        costumes,
+        elements,
+        rentals: splitRentals.rentals,
+        reservations: splitRentals.reservations,
       });
     } catch {
       this.setState({
@@ -325,7 +326,7 @@ class MainPage extends Component {
     };
 
     try {
-      const currentReturnDate = new Date(rentalToExtend.zwrot);
+      const currentReturnDate = new Date(rentalToExtend.return_date);
       const newReturnDate = new Date(currentReturnDate);
       newReturnDate.setDate(newReturnDate.getDate() + Number(extendDays));
 
@@ -336,7 +337,7 @@ class MainPage extends Component {
         {
           method: "PATCH",
           headers,
-          body: JSON.stringify({ zwrot: formattedNewReturnDate }),
+          body: JSON.stringify({ return_date: formattedNewReturnDate }),
         }
       );
 
@@ -367,7 +368,7 @@ class MainPage extends Component {
           Authorization: `Token ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ rezerwacja: false }),
+        body: JSON.stringify({ reservation: false }),
       });
 
       if (!response.ok) {
@@ -382,9 +383,9 @@ class MainPage extends Component {
     }
   };
   // Helper function to check if the rental is current or future
-  isCurrentOrFuture(wypozyczenie) {
+  isCurrentOrFuture(rental) {
     const currentDate = new Date();
-    const returnDate = wypozyczenie.zwrot ? new Date(wypozyczenie.zwrot) : null;
+    const returnDate = rental.return_date ? new Date(rental.return_date) : null;
     return !returnDate || returnDate >= currentDate;
   }
 
@@ -413,7 +414,7 @@ class MainPage extends Component {
     await this.handleReservationToRental(reservationToConfirm.id);
     this.closeConfirmReservationDialog();
   };
-  renderList(title, items, stroje, elementStroje) {
+  renderList(title, items, costumes, elements) {
     const formatDate = (dateString) => {
       if (!dateString) return "brak";
       const date = new Date(dateString);
@@ -432,36 +433,32 @@ class MainPage extends Component {
     ) : (
       items.map((item) => {
         const name = (() => {
-          if (item.stroj) {
-            return typeof item.stroj === "object"
-              ? item.stroj.name
-              : stroje.find((s) => s.id === item.stroj)?.name || "Strój nieznany";
+          if (item.costume) {
+            return typeof item.costume === "object"
+              ? item.costume.name
+              : costumes.find((s) => s.id === item.costume)?.name || "Strój nieznany";
           }
-          if (item.element_stroju) {
-            return typeof item.element_stroju === "object"
-              ? item.element_stroju.name
-              : elementStroje.find((e) => e.id === item.element_stroju)?.name || "Element stroju nieznany";
+          if (item.element) {
+            return typeof item.element === "object"
+              ? item.element.name
+              : elements.find((e) => e.id === item.element)?.name || "Element stroju nieznany";
           }
           return "Nieznany przedmiot";
         })();
 
-        const wypozyczonoDate = new Date(item.wypozyczono);
-        const zwrotDate = new Date(item.zwrot);
+        const wypozyczonoDate = new Date(item.rented);
+        const zwrotDate = new Date(item.return_date);
         const now = new Date();
 
-        // Log the dates and the current time
-        console.log("Wypozyczono date:", wypozyczonoDate);
-        console.log("Zwrot date:", zwrotDate);
-        console.log("Current date:", now);
+
 
         const showTimer = !this.state.user?.is_renter &&
-          item.wypozyczono &&
-          item.zwrot &&
+          item.rented &&
+          item.return_date &&
           wypozyczonoDate <= now &&
           zwrotDate > now;
 
-        // Log whether the timer will be shown
-        console.log("Show timer condition:", showTimer);
+
 
         const timeLeft = showTimer ? this.calculateTimeLeft(zwrotDate) : null;
 
@@ -484,10 +481,10 @@ class MainPage extends Component {
             <CardContent>
               <Typography variant="h6">{name}</Typography>
               <Typography variant="body2">
-                Wypożyczenie: {formatDate(item.wypozyczono)}
+                Wypożyczenie: {formatDate(item.rented)}
               </Typography>
               <Typography variant="body2">
-                Zwrot: {formatDate(item.zwrot)}
+                Zwrot: {formatDate(item.return_date)}
               </Typography>
               {showTimer && (
                 <Typography variant="body2" style={{ color: "green", marginTop: "5px" }}>
@@ -500,7 +497,7 @@ class MainPage extends Component {
                 style={{ marginTop: "10px" }}
                 onClick={() => this.openDeleteConfirmation(item)}
               >
-                Delete
+                Usuń
               </Button>
 
               <Button
@@ -511,7 +508,7 @@ class MainPage extends Component {
               >
                 Wydłuż
               </Button>
-              {item.rezerwacja && (
+              {item.reservation && (
                 <Button
                   variant="contained"
                   color="secondary"
@@ -556,6 +553,7 @@ class MainPage extends Component {
           <Card key={item.id} style={cardStyle}>
             <CardContent>
               <Typography variant="h6">{item.name}</Typography>
+              <Typography varabt="h3">ID: {item.extid}</Typography>
               {!isApproved && (
                 <Typography
                   variant="body2"
@@ -582,7 +580,7 @@ class MainPage extends Component {
                 color="secondary"
                 style={{ marginTop: "10px" }}
                 onClick={() =>
-                  this.openDeleteConfirmation({ ...item, type: isElement ? "element_stroju" : "stroj" })
+                  this.openDeleteConfirmation({ ...item, type: isElement ? "element" : "costume" })
                 }
                 disabled={!isApproved}
               >
@@ -600,8 +598,8 @@ class MainPage extends Component {
       user,
       rentals,
       reservations,
-      stroje,
-      elementStroje,
+      costumes,
+      elements,
       errorMessage,
       deleteConfirmationOpen,
       itemToDelete,
@@ -650,17 +648,7 @@ class MainPage extends Component {
           >
             Wyloguj się
           </Button>
-          {user?.is_renter && (
-            <div style={{ textAlign: "center", marginTop: "20px" }}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={this.handleSendReminders}
-              >
-                Wyślij przypomnienia
-              </Button>
-            </div>
-          )}
+
         </div>
 
         {/* Rentals and Reservations */}
@@ -669,13 +657,13 @@ class MainPage extends Component {
             <Typography variant="h5" style={{ textAlign: "center", marginBottom: "10px" }}>
               {user?.is_renter ? "Wypożyczenia Twoich przedmiotów" : "Twoje wypożyczenia"}
             </Typography>
-            {this.renderList("Wypożyczenia", rentals, stroje, elementStroje)}
+            {this.renderList("Wypożyczenia", rentals, costumes, elements)}
           </div>
           <div style={{ border: "3px solid #d4a373", borderRadius: "12px", backgroundColor: "rgba(0, 0, 0, 0.6)", color: "#fff", padding: "20px" }}>
             <Typography variant="h5" style={{ textAlign: "center", marginBottom: "10px" }}>
               {user?.is_renter ? "Rezerwacje Twoich przedmiotów" : "Twoje rezerwacje"}
             </Typography>
-            {this.renderList("Rezerwacje", reservations, stroje, elementStroje)}
+            {this.renderList("Rezerwacje", reservations, costumes, elements)}
           </div>
         </div>
 
@@ -685,11 +673,11 @@ class MainPage extends Component {
             <Typography variant="h5" style={{ textAlign: "center" }}>
               Twoje stroje
             </Typography>
-            {this.renderOwnedItems("stroje", this.state.allOwnedStroje)}
+            {this.renderOwnedItems("stroje", this.state.allOwnedCostumes)}
             <Typography variant="h5" style={{ textAlign: "center", marginTop: "20px" }}>
               Twoje elementy stroju
             </Typography>
-            {this.renderOwnedItems("elementy stroju", this.state.allOwnedElementStroje)}
+            {this.renderOwnedItems("elementy stroju", this.state.allOwnedElements)}
           </div>
         )}
 

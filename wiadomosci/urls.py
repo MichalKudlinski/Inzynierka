@@ -1,13 +1,12 @@
 from django.urls import path
 
-from .views import (CreateWiadomoscView, DestroyWiadomoscView,
-                    ListWiadomoscView, RetrieveWiadomoscView,
-                    UpdateWiadomoscView)
+from .views import (CreateNewsView, DestroyNewsView, ListNewsView,
+                    RetrieveNewsView, UpdateNewsView)
 
 urlpatterns = [
-    path('wiadomosci/', ListWiadomoscView.as_view(), name='wiadomosc-list'),
-    path('wiadomosci/create/', CreateWiadomoscView.as_view(), name='wiadomosc-create'),
-    path('wiadomosci/<int:pk>/', RetrieveWiadomoscView.as_view(), name='wiadomosc-detail'),
-    path('wiadomosci/<int:pk>/update/', UpdateWiadomoscView.as_view(), name='wiadomosc-update'),
-    path('wiadomosci/<int:pk>/delete/', DestroyWiadomoscView.as_view(), name='wiadomosc-delete'),
+    path('/list', ListNewsView.as_view(), name='news-list'),
+    path('/create', CreateNewsView.as_view(), name='news-create'),
+    path('<int:pk>/detail', RetrieveNewsView.as_view(), name='news-detail'),
+    path('<int:pk>/update', UpdateNewsView.as_view(), name='news-update'),
+    path('<int:pk>/delete', DestroyNewsView.as_view(), name='news-delete'),
 ]

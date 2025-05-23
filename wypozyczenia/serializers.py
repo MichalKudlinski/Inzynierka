@@ -6,48 +6,46 @@ from django.core.mail import send_mail
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from api.models import ElementStroju, Stroj, Wypozyczenie
+from api.models import Costume, Element, Rental
 
 
 class WypozyczenieSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Wypozyczenie
-        fields = ['id','user','stroj_nazwa', 'stroj','element_stroju','wypozyczono','zwrot','rezerwacja']
+        model = Rental
+        fields = ['id','user','costume_name', 'costume','element','rented','return_date','reservation']
         read_only_fields = ['user']
-    stroj_nazwa = serializers.CharField(source='stroj.nazwa', read_only=True)
-    rezerwacja = serializers.BooleanField(required=False)
+    costume_name = serializers.CharField(source='costume.name', read_only=True)
+    reservation = serializers.BooleanField(required=False)
 
     def validate(self, data):
-        element_stroju = data.get('element_stroju')
-        stroj = data.get('stroj')
-        wypozyczono = data.get('wypozyczono')
-        rezerwacja = data.get('rezerwacja', False)
+        element = data.get('element')
+        costume = data.get('costume')
+        rented = data.get('rented')
+        reservation = data.get('reservation', False)
         current_time = datetime.now()
-        zwrot = data.get('zwrot')
-        if zwrot:
-            if isinstance(zwrot, str):
+        return_date = data.get('return_date')
+        if return_date:
+            if isinstance(return_date, str):
                 try:
-                    data['zwrot'] = datetime.fromisoformat(zwrot)
+                    data['return_date'] = datetime.fromisoformat(return_date)
                 except ValueError:
                     raise ValidationError("Invalid date format for zwrot, should be ISO format.")
-            elif isinstance(zwrot, datetime):
-                data['zwrot'] = zwrot
+            elif isinstance(return_date, datetime):
+                data['return_date'] = return_date
             else:
                 raise ValidationError("zwrot must be a string or datetime object.")
-
-
 
         return data
 
     def create(self, validated_data):
-        rezerwacja = validated_data.get('rezerwacja', False)
+        reservation = validated_data.get('reservation', False)
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
-        zwrot = validated_data.get('zwrot', instance.zwrot)
-        instance.zwrot = zwrot
-        rezerwacja = validated_data.get('rezerwacja', instance.rezerwacja)
-        instance.rezerwacja = rezerwacja
+        return_date = validated_data.get('return_date', instance.return_date    )
+        instance.return_date = return_date
+        reservation = validated_data.get('reservation', instance.reservation)
+        instance.reservation = reservation
         instance.save()
         return instance
 

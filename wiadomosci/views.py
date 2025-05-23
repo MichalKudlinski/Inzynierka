@@ -1,42 +1,49 @@
 
 from rest_framework import generics
-from rest_framework.permissions import AllowAny
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
-from api.models import Wiadomosci
+from api.models import News
 
-from .serializers import WiadomosciSerializer
+from .serializers import NewsSerializer
 
 
-class CreateWiadomoscView(generics.CreateAPIView):
+class CreateNewsView(generics.CreateAPIView):
     """Tworzenie nowej wiadomości"""
-    permission_classes = (AllowAny,)
-    serializer_class = WiadomosciSerializer
-    queryset = Wiadomosci.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = NewsSerializer
+    queryset = News.objects.all()
 
 
-class ListWiadomoscView(generics.ListAPIView):
+class ListNewsView(generics.ListAPIView):
     """Listowanie wiadomości"""
-    permission_classes = (AllowAny,)
-    serializer_class = WiadomosciSerializer
-    queryset = Wiadomosci.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = NewsSerializer
+    queryset = News.objects.all()
 
 
-class RetrieveWiadomoscView(generics.RetrieveAPIView):
+class RetrieveNewsView(generics.RetrieveAPIView):
     """Szczegóły jednej wiadomości"""
-    permission_classes = (AllowAny,)
-    serializer_class = WiadomosciSerializer
-    queryset = Wiadomosci.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = NewsSerializer
+    queryset = News.objects.all()
 
 
-class UpdateWiadomoscView(generics.UpdateAPIView):
+class UpdateNewsView(generics.UpdateAPIView):
     """Aktualizacja wiadomości"""
-    permission_classes = (AllowAny,)
-    serializer_class = WiadomosciSerializer
-    queryset = Wiadomosci.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = NewsSerializer
+    queryset = News.objects.all()
 
 
-class DestroyWiadomoscView(generics.DestroyAPIView):
+class DestroyNewsView(generics.DestroyAPIView):
     """Usuwanie wiadomości"""
-    permission_classes = (AllowAny,)
-    serializer_class = WiadomosciSerializer
-    queryset = Wiadomosci.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = NewsSerializer
+    queryset = News.objects.all()

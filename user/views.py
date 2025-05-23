@@ -22,7 +22,7 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
-from api.models import User, WiadomosciKontrol
+from api.models import ControlMessage, User
 from user.serializers import AuthTokenSerializer, UserSerializer
 
 # Create your views here.
@@ -68,7 +68,7 @@ def reset_password(request):
                 return JsonResponse({"error": "Brak użytkownika z takim adresem email."}, status=404)
 
             seven_days_ago = timezone.now() - timedelta(days=7)
-            recent = WiadomosciKontrol.objects.filter(
+            recent = ControlMessage.objects.filter(
             user=user,
             name="password_reset",
             created_at__gte=seven_days_ago
@@ -94,7 +94,7 @@ def reset_password(request):
                 recipient_list=["michal.kudlinski@gmail.com"],
                 fail_silently=False,
             )
-            WiadomosciKontrol.objects.create(
+            ControlMessage.objects.create(
             name="password_reset",
             user=user
         )

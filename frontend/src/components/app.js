@@ -21,7 +21,7 @@ export default class App extends Component {
                     <Route path="/main" element={<MainPageWithNavigate />} />
                     <Route path="/reservations" element={<ReservationPage />} />
                     <Route path="/details/:type/:id" element={<DetailPage />} />
-                    <Route path="/dodaj" element={<AddPage />} /> {/* ✅ Added AddPage route */}
+                    <Route path="/dodaj" element={<AddPage />} />
                 </Routes>
             </Router>
         );

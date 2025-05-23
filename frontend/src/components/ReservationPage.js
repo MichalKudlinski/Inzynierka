@@ -196,11 +196,11 @@ class ReservationPage extends Component {
 
     const conflicts = reservations.filter((rental) => {
       const isSameItem = isElement
-        ? rental.element_stroju === itemToProcess.id
-        : rental.stroj === itemToProcess.id;
+        ? rental.element === itemToProcess.id
+        : rental.costume === itemToProcess.id;
       if (!isSameItem) return false;
-      const start = new Date(rental.wypozyczono);
-      const end = new Date(rental.zwrot);
+      const start = new Date(rental.rented);
+      const end = new Date(rental.return_date);
       return wypozyczonoDate < end && rentalDate > start;
     });
 
@@ -212,7 +212,7 @@ class ReservationPage extends Component {
       });
     }
 
-    // prepare payload
+
     const token = localStorage.getItem("token");
     if (!this.state.user?.id || !token) {
       return this.setState({
@@ -222,10 +222,10 @@ class ReservationPage extends Component {
     }
 
     const payload = {
-      rezerwacja: dialogType === "reserve",
-      wypozyczono: wypozyczonoDate.toISOString(),
-      zwrot: rentalDate.toISOString(),
-      [isElement ? "element_stroju" : "stroj"]: itemToProcess.id,
+      reservation: dialogType === "reserve",
+      rented: wypozyczonoDate.toISOString(),
+      return_date: rentalDate.toISOString(),
+      [isElement ? "element" : "costume"]: itemToProcess.id,
     };
 
     try {
@@ -472,7 +472,7 @@ class ReservationPage extends Component {
                       style={{ marginTop: "10px" }}
                       onClick={() =>
                         this.props.navigate(
-                          `/details/${showFullCostume ? "stroj" : "element"}/${item.id
+                          `/details/${showFullCostume ? "costume" : "element"}/${item.id
                           }`
                         )
                       }
@@ -566,7 +566,7 @@ class ReservationPage extends Component {
               selectedRentals.map((rental, i) => (
                 <div key={i} style={{ marginBottom: "10px" }}>
                   <Typography variant="body2">
-                    {rental.rezerwacja ? "Rezerwacja" : "Wypożyczenie"} od:{" "}
+                    {rental.reservation ? "Rezerwacja" : "Wypożyczenie"} od:{" "}
                     {new Date(rental.wypozyczono).toLocaleString()} do:{" "}
                     {new Date(rental.zwrot).toLocaleString()}
                   </Typography>

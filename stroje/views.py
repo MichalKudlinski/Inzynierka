@@ -5,75 +5,82 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.models import ElementStroju, Stroj
+from api.models import Costume, Element
 
-from .serializers import ElementStrojuSerializer, StrojSerializer
+from .serializers import CostumeSerializer, ElementSerializer
 
 
-class CreateElementStrojuView(generics.CreateAPIView):
+class CreateElementView(generics.CreateAPIView):
         """Tworzenie nowego elementu stroju w systemie"""
-        permission_classes = (AllowAny,)
-        serializer_class = ElementStrojuSerializer
+        authentication_classes = [TokenAuthentication]
+        permission_classes = [IsAuthenticated]
+        serializer_class = ElementSerializer
         def post(self, request, *args, **kwargs):
             serializer = self.get_serializer(data=request.data, context={"request": request})
             if not serializer.is_valid():
-                print("Validation errors:", serializer.errors)  # 👈 Debug output
                 return Response(serializer.errors, status=400)
             self.perform_create(serializer)
             return Response(serializer.data, status=201)
 
-class ListElementStrojuView(generics.ListAPIView):
+class ListElementView(generics.ListAPIView):
         """Listowanie elementow stroju"""
-        permission_classes = (AllowAny,)
-        queryset = ElementStroju.objects.all()
-        serializer_class = ElementStrojuSerializer
+        authentication_classes = [TokenAuthentication]
+        permission_classes = [IsAuthenticated]
+        queryset = Element.objects.all()
+        serializer_class = ElementSerializer
 
-class RetrieveElementStrojuView(generics.RetrieveAPIView):
+class RetrieveElementView(generics.RetrieveAPIView):
     """Jeden element"""
-    permission_classes = (AllowAny,)
-    queryset = ElementStroju.objects.all()
-    serializer_class = ElementStrojuSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    queryset = Element.objects.all()
+    serializer_class = ElementSerializer
 
-class UpdateElementStrojuView(generics.UpdateAPIView):
+class UpdateElementView(generics.UpdateAPIView):
     """Zmiana nazwy elementu"""
-    permission_classes = (AllowAny,)
-    queryset = ElementStroju.objects.all()
-    serializer_class = ElementStrojuSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    queryset = Element.objects.all()
+    serializer_class = ElementSerializer
 
-class DestroyElementStrojuView(generics.DestroyAPIView):
+class DestroyElementView(generics.DestroyAPIView):
     """Usuwanie elementu"""
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-    queryset = ElementStroju.objects.all()
-    serializer_class = ElementStrojuSerializer
+    queryset = Element.objects.all()
+    serializer_class = ElementSerializer
 
 
-class CreateStrojView(generics.CreateAPIView):
+class CreateCostumeView(generics.CreateAPIView):
     """Tworzenie nowego stroju w systemie"""
-    permission_classes = (AllowAny,)
-    serializer_class = StrojSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = CostumeSerializer
 
-class ListStrojView(generics.ListAPIView):
+class ListCostumeView(generics.ListAPIView):
     """Listowanie strojow"""
-    permission_classes = (AllowAny,)
-    queryset = Stroj.objects.all()
-    serializer_class = StrojSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    queryset = Costume.objects.all()
+    serializer_class = CostumeSerializer
 
-class RetrieveStrojView(generics.RetrieveAPIView):
+class RetrieveCostumeView(generics.RetrieveAPIView):
     """Szczegóły jednego stroju"""
-    permission_classes = (AllowAny,)
-    queryset = Stroj.objects.all()
-    serializer_class = StrojSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    queryset = Costume.objects.all()
+    serializer_class = CostumeSerializer
 
-class UpdateStrojView(generics.UpdateAPIView):
+class UpdateCostumeView(generics.UpdateAPIView):
     """Zmiana nazwy stroju"""
-    permission_classes = (AllowAny,)
-    queryset = Stroj.objects.all()
-    serializer_class = StrojSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    queryset = Costume.objects.all()
+    serializer_class = CostumeSerializer
 
-class DestroyStrojView(generics.DestroyAPIView):
+class DestroyCostumeView(generics.DestroyAPIView):
     """Usuwanie stroju"""
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-    queryset = Stroj.objects.all()
-    serializer_class = StrojSerializer
+    queryset = Costume.objects.all()
+    serializer_class = CostumeSerializer

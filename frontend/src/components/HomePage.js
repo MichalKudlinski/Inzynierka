@@ -9,7 +9,7 @@ const HomePage = () => {
   useEffect(() => {
     const fetchWiadomosci = async () => {
       try {
-        const res = await fetch("/api/wiadomosci/wiadomosci");
+        const res = await fetch("/api/news/list");
         if (!res.ok) throw new Error("Błąd podczas pobierania wiadomości");
         const data = await res.json();
 

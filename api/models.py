@@ -1,5 +1,9 @@
+import io
 import logging
 import os
+import smtplib
+from email.message import EmailMessage
+from io import BytesIO
 
 from django.conf import settings
 from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
@@ -7,12 +11,14 @@ from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage, send_mail
 from django.db import models
+from PIL import Image as PilImage
+from PIL import ImageDraw, ImageFont
 
 """
 Klasy w bazie danych
 """
 
-# Klasa menadzer uzytkownikow
+
 
 class UserManager(BaseUserManager):
 
@@ -39,7 +45,7 @@ class UserManager(BaseUserManager):
 
 
 
-# Klasa Uzytkownik
+
 class User(AbstractBaseUser, PermissionsMixin):
         email = models.EmailField(max_length=255, unique=True, null=False, blank=False)
         name = models.CharField(max_length=255, unique = True)
@@ -68,38 +74,18 @@ class User(AbstractBaseUser, PermissionsMixin):
                 recipient_list = ['michal.kudlinski@gmail.com']
                 email = EmailMessage(subject, message, from_email, recipient_list)
 
-        # Attach Excel files
-                base_path = os.path.join(settings.MEDIA_ROOT, "uploads", "excels")
-                file_paths = [
-                    os.path.join(base_path, "stroje.xlsx"),
-                    os.path.join(base_path, "element_stroju.xlsx"),
-                     ]
-                for path in file_paths:
-                    if os.path.exists(path):
-                        email.attach_file(path)
-                    else:
-                        print(f"Attachment not found: {path}")
-                try:
-                    email.send()
-                    print(f"Email sent to {self.email}")
-                except Exception as e:
-                    print(f"Error sending email to {self.email}: {e}")
 
 
 
-class ElementStroju(models.Model):
-    id  = models.BigAutoField(primary_key  = True)
-
-    extid = models.CharField(max_length=255, unique=True, blank=True, null=True, editable = False)
-
-
-    name = models.CharField(max_length= 255)
-
+class Element(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    extid = models.CharField(max_length=255, unique=True, blank=True, null=True, editable=False)
+    name = models.CharField(max_length=255)
     user = models.ForeignKey('User', on_delete=models.CASCADE)
     city = models.CharField(max_length=255)
-
     description = models.TextField(blank=True)
     confirmed = models.BooleanField(default=False)
+
     ELEMENT_TYPES = [
         ('nakrycie glowy', 'Nakrycie Glowy'),
         ('koszula', 'Koszula'),
@@ -112,137 +98,156 @@ class ElementStroju(models.Model):
         ('sukienka', 'Sukienka'),
     ]
 
-    GENDERS = [
-        ('meski', 'Meski'),
-        ('damski','Damski'),    ]
+    GENDERS = [('meski', 'Meski'), ('damski','Damski')]
 
-    SIZE_CATEGORIES= [
-        ('S', 'Small'),
-        ('M', 'Medium'),
-        ('L', 'Large'),    ]
+    SIZE_CATEGORIES= [('S', 'Small'), ('M', 'Medium'), ('L', 'Large')]
 
-    gender = models.CharField(
-        max_length = 10,
-        choices = GENDERS,
-    )
-    size = models.CharField(
-         max_length = 50,
-        choices = SIZE_CATEGORIES)
-    element_type = models.CharField(
-        max_length = 50,
-        choices = ELEMENT_TYPES)
-
+    gender = models.CharField(max_length=10, choices=GENDERS)
+    size = models.CharField(max_length=50, choices=SIZE_CATEGORIES)
+    element_type = models.CharField(max_length=50, choices=ELEMENT_TYPES)
     image = models.ImageField(upload_to='uploads/images/', blank=True, null=True)
 
     def __str__(self):
         return f"{self.name}"
+
     def save(self, *args, **kwargs):
-
         if not getattr(self.user, "is_renter", False):
-            raise ValidationError(
-                "Użytkownik nie ma uprawnień wynajmującego (is_renter must be True)."
-            )
-        is_new = self._state.adding
+            raise ValidationError("Użytkownik nie ma uprawnień wynajmującego (is_renter must be True).")
 
+        is_new = self.pk is None
+        old_extid = None
+        old_confirmed = False
+
+        if not is_new:
+            old = Element.objects.filter(pk=self.pk).first()
+            old_extid = old.extid if old else None
+            old_confirmed = old.confirmed if old else False
 
         super().save(*args, **kwargs)
 
-        if is_new and self.user and getattr(self.user, 'email', None):
-            subject = f"Nowy element stroju dodany: {self.name}"
+        if not old_confirmed and self.confirmed and self.user and getattr(self.user, 'email', None) and self.extid:
+            subject = f"Element stroju zatwierdzony: {self.name}"
             message = (
                 f"Hej {self.user.name},\n\n"
-                f"Do systemu został właśnie dodany nowy element stroju, którego jesteś właścicielem o nazwie: “{self.name}”.\n"
-                f"Ten element stroju tym samym staje się dostępny do wypożyczenia i rezerwacji dla innych użytkownikoów.\n\n"
-                "Pozdrawiamy,\nHeritageWear.pl "
-            )
-            from_email = "heritage.wear.kontakt@gmail.com"
-            recipient_list = ["michal.kudlinski@gmail.com"]
-            send_mail(subject, message, from_email, recipient_list)
-
-
-class Stroj(models.Model):
-
-    id = models.BigAutoField(primary_key=True)
-
-    user = models.ForeignKey('User', on_delete=models.CASCADE)
-    extid = models.CharField(max_length=255, unique=True, blank=True, null=True, editable=False)
-
-
-    name = models.CharField(max_length=255)
-
-
-    description = models.TextField(blank=True)
-
-    city = models.CharField(max_length=255)
-
-    image = models.ImageField(upload_to='uploads/images/', blank=True, null=True)
-    GENDERS = [
-        ('meski', 'Meski'),
-        ('damski', 'Damski'),
-        ('unisex', 'Unisex'),
-    ]
-
-    gender = models.CharField(
-        max_length=10,
-        choices=GENDERS,
-    )
-    SIZE_CATEGORIES= [
-        ('S', 'Small'),
-        ('M', 'Medium'),
-        ('L', 'Large'),   ]
-
-    size = models.CharField(
-         max_length = 50,
-        choices = SIZE_CATEGORIES)
-    nakrycie_glowy = models.ForeignKey('ElementStroju', related_name='nakrycie_glowy', on_delete=models.CASCADE, blank=True, null=True)
-    koszula = models.ForeignKey('ElementStroju', related_name='koszula', on_delete=models.CASCADE, blank=True, null=True)
-    spodnie = models.ForeignKey('ElementStroju', related_name='spodnie', on_delete=models.CASCADE, blank=True, null=True)
-    kamizelka = models.ForeignKey('ElementStroju', related_name='kamizelka', on_delete=models.CASCADE, blank=True, null=True)
-    buty = models.ForeignKey('ElementStroju', related_name='buty', on_delete=models.CASCADE, blank=True, null=True)
-    akcesoria = models.ForeignKey('ElementStroju', related_name='akcesoria', on_delete=models.CASCADE, blank=True, null=True)
-    bizuteria = models.ForeignKey('ElementStroju', related_name='bizuteria', on_delete=models.CASCADE, blank=True, null=True)
-    halka = models.ForeignKey('ElementStroju', related_name='halka', on_delete=models.CASCADE, blank=True, null=True)
-    sukienka = models.ForeignKey('ElementStroju', related_name='sukienka', on_delete=models.CASCADE, blank=True, null=True)
-    confirmed = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"Stroj: {self.name}"
-
-    def save(self, *args, **kwargs):
-
-        if not getattr(self.user, "is_renter", False):
-            raise ValidationError(
-                "Użytkownik nie ma uprawnień wynajmującego (is_renter must be True)."
-            )
-
-        is_new = self._state.adding
-
-        # Perform the actual save (this will assign self.pk if new)
-        super().save(*args, **kwargs)
-
-        # If it was new, and user/email exist, send notification
-        if is_new and self.user and getattr(self.user, "email", None):
-            subject = f"Nowy strój dodany: {self.name}"
-            message = (
-                f"Hej {self.user.name},\n\n"
-                f"Do systemu został właśnie dodany nowy strój, którego jesteś właścicielem o nazwie: “{self.name}”.\n"
-                f"Ten strój tym samym staje się dostępny do wypożyczenia i rezerwacji dla innych użytkownikoów.\n\n"
+                f"Twój element stroju o nazwie “{self.name}” został zatwierdzony i jest teraz dostępny do wypożyczenia i rezerwacji dla innych użytkowników.\n\n"
                 "Pozdrawiamy,\nHeritageWear.pl"
             )
             from_email = "heritage.wear.kontakt@gmail.com"
             recipient_list = ["michal.kudlinski@gmail.com"]
-            send_mail(subject, message, from_email, recipient_list)
 
-class Wypozyczenie(models.Model):
+            try:
+                generated_img = PilImage.new("RGB", (600, 200), color=(255, 255, 255))
+                draw = ImageDraw.Draw(generated_img)
+
+                try:
+                    font = ImageFont.truetype("arial.ttf", 48)
+                except:
+                    font = ImageFont.load_default()
+
+                draw.text((50, 80), f"{self.extid}", font=font, fill=(0, 0, 0))
+
+                buffer = io.BytesIO()
+                generated_img.save(buffer, format="JPEG")
+                buffer.seek(0)
+
+                email = EmailMessage(subject, message, from_email, recipient_list)
+                email.attach(f"{self.extid}.jpg", buffer.read(), "image/jpeg")
+                email.send()
+            except:
+                pass
+
+
+
+
+class Costume(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    user = models.ForeignKey('User', on_delete=models.CASCADE)
+    extid = models.CharField(max_length=255, unique=True, blank=True, null=True, editable=False)
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    city = models.CharField(max_length=255)
+    image = models.ImageField(upload_to='uploads/images/', blank=True, null=True)
+
+    GENDERS = [('meski', 'Meski'), ('damski', 'Damski'), ('unisex', 'Unisex')]
+    SIZE_CATEGORIES= [('S', 'Small'), ('M', 'Medium'), ('L', 'Large')]
+
+    gender = models.CharField(max_length=10, choices=GENDERS)
+    size = models.CharField(max_length=50, choices=SIZE_CATEGORIES)
+
+    nakrycie_glowy = models.ForeignKey('Element', related_name='nakrycie_glowy', on_delete=models.CASCADE, blank=True, null=True)
+    koszula = models.ForeignKey('Element', related_name='koszula', on_delete=models.CASCADE, blank=True, null=True)
+    spodnie = models.ForeignKey('Element', related_name='spodnie', on_delete=models.CASCADE, blank=True, null=True)
+    kamizelka = models.ForeignKey('Element', related_name='kamizelka', on_delete=models.CASCADE, blank=True, null=True)
+    buty = models.ForeignKey('Element', related_name='buty', on_delete=models.CASCADE, blank=True, null=True)
+    akcesoria = models.ForeignKey('Element', related_name='akcesoria', on_delete=models.CASCADE, blank=True, null=True)
+    bizuteria = models.ForeignKey('Element', related_name='bizuteria', on_delete=models.CASCADE, blank=True, null=True)
+    halka = models.ForeignKey('Element', related_name='halka', on_delete=models.CASCADE, blank=True, null=True)
+    sukienka = models.ForeignKey('Element', related_name='sukienka', on_delete=models.CASCADE, blank=True, null=True)
+
+    confirmed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Costume: {self.name}"
+
+    def save(self, *args, **kwargs):
+        if not getattr(self.user, "is_renter", False):
+            raise ValidationError("Użytkownik nie ma uprawnień wynajmującego (is_renter must be True).")
+
+        is_new = self.pk is None
+        old_extid = None
+        old_confirmed = False
+
+        if not is_new:
+            old = Costume.objects.filter(pk=self.pk).first()
+            old_extid = old.extid if old else None
+            old_confirmed = old.confirmed if old else False
+
+        super().save(*args, **kwargs)
+
+        if not old_confirmed and self.confirmed and self.user and getattr(self.user, 'email', None) and self.extid:
+            subject = f"Strój zatwierdzony: {self.name}"
+            message = (
+                f"Hej {self.user.name},\n\n"
+                f"Twój strój o nazwie “{self.name}” został zatwierdzony i jest teraz dostępny do wypożyczenia i rezerwacji dla innych użytkowników.\n\n"
+                "Pozdrawiamy,\nHeritageWear.pl"
+            )
+            from_email = "heritage.wear.kontakt@gmail.com"
+            recipient_list = ["michal.kudlinski@gmail.com"]
+
+            try:
+                generated_img = PilImage.new("RGB", (600, 200), color=(255, 255, 255))
+                draw = ImageDraw.Draw(generated_img)
+
+                try:
+                    font = ImageFont.truetype("arial.ttf", 48)
+                except:
+                    font = ImageFont.load_default()
+
+                draw.text((50, 80), f"{self.extid}", font=font, fill=(0, 0, 0))
+
+                buffer = io.BytesIO()
+                generated_img.save(buffer, format="JPEG")
+                buffer.seek(0)
+
+                email = EmailMessage(subject, message, from_email, recipient_list)
+                email.attach(f"{self.extid}.jpg", buffer.read(), "image/jpeg")
+                email.send()
+            except:
+                pass
+
+
+
+class Rental(models.Model):
     id = models.BigAutoField(primary_key=True)
 
     user = models.ForeignKey('User', on_delete=models.CASCADE)
-    element_stroju = models.ForeignKey('ElementStroju', on_delete=models.CASCADE, blank=True, null=True)
-    stroj = models.ForeignKey('Stroj', on_delete=models.CASCADE, blank=True, null=True)
+    element = models.ForeignKey('Element', on_delete=models.CASCADE, blank=True, null=True)
+    costume = models.ForeignKey('Costume', on_delete=models.CASCADE, blank=True, null=True)
 
-    wypozyczono = models.DateTimeField(auto_now_add=False)
-    zwrot = models.DateTimeField(blank=True, null=True)
-    rezerwacja = models.BooleanField(default=False)  # Czy rezerwacja
+    rented = models.DateTimeField(auto_now_add=False)
+    return_date = models.DateTimeField(blank=True, null=True)
+    reservation = models.BooleanField(default=False)  # Czy rezerwacja
+    created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Wypozyczenie: {self.id} "
@@ -262,22 +267,22 @@ class Wypozyczenie(models.Model):
                 user_phone_number = None
                 city = None
 
-                if self.stroj and self.stroj.user:
-                    user_phone_number = self.stroj.user.phone_number
-                    city = self.stroj.city
-                elif self.element_stroju and self.element_stroju.user:
-                    city = self.element_stroju.city
-                    user_phone_number = self.element_stroju.user.phone_number
-                wypozyczono = self.wypozyczono.strftime('%d-%m-%Y') if self.wypozyczono else 'Brak daty'
-                zwrot = self.zwrot.strftime('%d-%m-%Y') if self.zwrot else 'Brak daty'
+                if self.costume and self.costume.user:
+                    user_phone_number = self.costume.user.phone_number
+                    city = self.costume.city
+                elif self.elementu and self.element.user:
+                    city = self.element.city
+                    user_phone_number = self.element.user.phone_number
+                rented = self.rented.strftime('%d-%m-%Y') if self.rented else 'Brak daty'
+                return_date = self.zwrot.strftime('%d-%m-%Y') if self.zwrot else 'Brak daty'
                 # Construct the email body
-                name = self.element_stroju.name if self.element_stroju else self.stroj.name
-                if not self.rezerwacja:  # Only modify the email body if reservation is False
+                name = self.element.name if self.element else self.costume.name
+                if not self.reservation:
 
                     message = ( f"Cześć {self.user.name},\n\n"
                               f"Ten email jest potwierdzeniem wypożyczenia : {name}\n."
-                              f"• Data rozpoczęcia wypożyczenia: {wypozyczono}\n"
-                              f"• Data zwrotu: {zwrot}\n"
+                              f"• Data rozpoczęcia wypożyczenia: {rented}\n"
+                              f"• Data zwrotu: {return_date}\n"
                               f"• Miasto właściciela: {city}\n"
                               f"• Numer właściciela: {user_phone_number if user_phone_number else 'Brak numeru telefonu właściciela'}\n"
                               f"Sposób przekazania stroju i warunki jego wypożyczenia proszę ustalić bezpośrednio z właścicielem stroju / elementu stroju.\n\n"
@@ -286,8 +291,8 @@ class Wypozyczenie(models.Model):
                 else:
                     message = ( f"Cześć {self.user.name},\n\n"
                                 f"Ten email jest potwierdzeniem rezerwacji: {name}\n"
-                                f"• Data rozpoczęcia rezerwacji: {wypozyczono}\n"
-                                f"• Data zakończenia rezerwacji: {zwrot}\n"
+                                f"• Data rozpoczęcia rezerwacji: {rented}\n"
+                                f"• Data zakończenia rezerwacji: {return_date}\n"
                                 f"• Miasto właściciela: {city}\n\n"
                                 "Masz 7 dni na potwierdzenie chęci wypożyczenia stroju w podanym terminie.\n"
                                 "Potwierdzenia rezerwcji możesz dokonać na stronie głównej heritage-wear.pl”.\n\n"
@@ -306,11 +311,11 @@ class Wypozyczenie(models.Model):
         except Exception as e:
             print(f"Error occurred while saving Wypozyczenie ID={self.id}: {e}")
     def delete(self, using=None, keep_parents=False):
-        # figure out which element name we’re talking about
-        if self.stroj and self.stroj.user:
-            element_name = self.stroj.name
-        elif self.element_stroju and self.element_stroju.user:
-            element_name = self.element_stroju.name
+
+        if self.costume and self.costume.user:
+            element_name = self.costume.name
+        elif self.element and self.element.user:
+            element_name = self.element.name
         else:
             element_name = "nieznany przedmiot"
 
@@ -321,8 +326,8 @@ class Wypozyczenie(models.Model):
                 message=(
                     f"Cześć {self.user.name},\n\n"
                     f"Twoje wypożyczenie przedmiotu “{element_name}” (ID {self.id}) "
-                    f"od dnia {self.wypozyczono.strftime('%Y-%m-%d')} "
-                    f"do dnia {self.zwrot.strftime('%Y-%m-%d')} zostało anulowane.\n\n"
+                    f"od dnia {self.rented.strftime('%Y-%m-%d')} "
+                    f"do dnia {self.return_date.strftime('%Y-%m-%d')} zostało anulowane.\n\n"
                     "Pozdrawiamy,\nHeritageWear.pl"
                 ),
                 from_email=settings.DEFAULT_FROM_EMAIL,
@@ -334,7 +339,7 @@ class Wypozyczenie(models.Model):
             # raise
 
         # Send to owner
-        owner = (self.stroj or self.element_stroju).user
+        owner = (self.costume or self.element).user
         try:
             send_mail(
                 subject=f"Zwrot przedmiotu “{element_name}” anulowany",
@@ -342,8 +347,8 @@ class Wypozyczenie(models.Model):
                     f"Cześć {owner.name},\n\n"
                     f"Użytkownik {self.user.name} ({self.user.email}) anulował wypożyczenie "
                     f"Twojego przedmiotu “{element_name}” (ID {self.id}).\n"
-                    f"Termin wypożyczenia: {self.wypozyczono.strftime('%Y-%m-%d')} "
-                    f"– {self.zwrot.strftime('%Y-%m-%d')}.\n\n"
+                    f"Termin wypożyczenia: {self.rented.strftime('%Y-%m-%d')} "
+                    f"– {self.return_date.strftime('%Y-%m-%d')}.\n\n"
                     "Przedmiot jest teraz dostępny do ponownego wypożyczenia w tym czasie.\n\n"
                     "Pozdrawiamy,\nHeritageWear.pl"
                 ),
@@ -371,7 +376,7 @@ class Image(models.Model):
         return self.image.url
 
 
-class Wiadomosci(models.Model):
+class News(models.Model):
     name = models.CharField(max_length=100)
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -379,7 +384,7 @@ class Wiadomosci(models.Model):
     def __str__(self):
         return f"{self.name} ({self.created_at.strftime('%Y-%m-%d %H:%M')})"
 
-class WiadomosciKontrol(models.Model):
+class ControlMessage(models.Model):
     name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey('User', on_delete=models.CASCADE)

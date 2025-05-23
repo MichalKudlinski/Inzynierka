@@ -22,7 +22,6 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from wypozyczenia import views
 
 urlpatterns = [
-    path('create/', views.CreateWypozyczenieView.as_view(), name='create-wypozyczenie'),
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('api/schema',SpectacularAPIView.as_view(), name='api_schema'),
@@ -30,7 +29,7 @@ urlpatterns = [
     path('api/user/', include('user.urls')),
     path('api/costumes/',include('stroje.urls')),
     path('api/rentals/',include('wypozyczenia.urls')),
-    path('api/wiadomosci/', include('wiadomosci.urls')),
+    path('api/news/', include('wiadomosci.urls')),
     path('',include('frontend.urls')),
 
 ]

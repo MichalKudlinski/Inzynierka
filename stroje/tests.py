@@ -4,14 +4,14 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from api.models import ElementStroju, Stroj
+from api.models import Costume, Element
 
 User = get_user_model()
 
 def create_user(email='test@example.com', password='password123'):
     return User.objects.create_user(email=email, password=password, name='Test User')
 
-class ElementStrojuApiTests(TestCase):
+class ElementuApiTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
@@ -20,9 +20,9 @@ class ElementStrojuApiTests(TestCase):
 
     def test_create_element_stroju(self):
             url = reverse('element-create')
-            valid_gender = ElementStroju.GENDERS[0][0]
-            valid_size = ElementStroju.SIZE_CATEGORIES[0][0]
-            valid_type = ElementStroju.ELEMENT_TYPES[1][0]
+            valid_gender = Element.GENDERS[0][0]
+            valid_size = Element.SIZE_CATEGORIES[0][0]
+            valid_type = Element.ELEMENT_TYPES[1][0]
 
             payload = {
                 'name': 'Koszula Testowa',
@@ -38,8 +38,8 @@ class ElementStrojuApiTests(TestCase):
 
             self.assertEqual(response.status_code, status.HTTP_201_CREATED, f"Unexpected response: {response.data}")
 
-            self.assertTrue(ElementStroju.objects.filter(name='Koszula Testowa').exists(), "ElementStroju not found in DB")
-            created = ElementStroju.objects.get(name='Koszula Testowa')
+            self.assertTrue(Element.objects.filter(name='Koszula Testowa').exists(), "ElementStroju not found in DB")
+            created = Element.objects.get(name='Koszula Testowa')
 
             self.assertEqual(created.gender, valid_gender)
             self.assertEqual(created.size, valid_size)
@@ -47,7 +47,7 @@ class ElementStrojuApiTests(TestCase):
             self.assertEqual(created.user, self.user)
 
     def test_list_element_stroju(self):
-        ElementStroju.objects.create(
+        Element.objects.create(
             name='Krawat',
             user=self.user,
             gender='M',
@@ -60,7 +60,7 @@ class ElementStrojuApiTests(TestCase):
         self.assertGreaterEqual(len(res.data), 1)
 
     def test_retrieve_element_stroju(self):
-        element = ElementStroju.objects.create(
+        element = Element.objects.create(
             name='Kapelusz',
             user=self.user,
             gender='M',
@@ -73,7 +73,7 @@ class ElementStrojuApiTests(TestCase):
         self.assertEqual(res.data['id'], element.id)
 
     def test_update_element_stroju(self):
-        element = ElementStroju.objects.create(
+        element = Element.objects.create(
             name='Płaszcz',
             user=self.user,
             gender='M',
@@ -88,7 +88,7 @@ class ElementStrojuApiTests(TestCase):
         self.assertEqual(element.name, 'Nowy Płaszcz')
 
     def test_delete_element_stroju(self):
-        element = ElementStroju.objects.create(
+        element = Element.objects.create(
             name='Buty',
             user=self.user,
             gender='M',
@@ -98,9 +98,9 @@ class ElementStrojuApiTests(TestCase):
         url = reverse('element-delete', args=[element.id])
         res = self.client.delete(url)
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(ElementStroju.objects.filter(id=element.id).exists())
+        self.assertFalse(Element.objects.filter(id=element.id).exists())
 
-class StrojApiTests(TestCase):
+class CostumeApiTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
@@ -108,7 +108,7 @@ class StrojApiTests(TestCase):
         self.client.force_authenticate(user=self.user)
 
 
-        self.koszula = ElementStroju.objects.create(
+        self.koszula = Element.objects.create(
             name="Koszula Biała",
             description="Opis",
             gender="meski",
@@ -135,16 +135,16 @@ class StrojApiTests(TestCase):
         print("Response:", response.status_code, response.data)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(Stroj.objects.filter(name='Stroj Meski').exists())
+        self.assertTrue(Costume.objects.filter(name='Stroj Meski').exists())
 
-        stroj = Stroj.objects.get(name='Stroj Meski')
-        self.assertEqual(stroj.koszula, self.koszula)
-        self.assertEqual(stroj.gender, 'meski')
-        self.assertEqual(stroj.user, self.user)
+        costume = Costume.objects.get(name='Stroj Meski')
+        self.assertEqual(costume.koszula, self.koszula)
+        self.assertEqual(costume.gender, 'meski')
+        self.assertEqual(costume.user, self.user)
 
     def test_create_stroj_duplicate_element_assignment(self):
         """Test that assigning same koszula to multiple stroje fails"""
-        Stroj.objects.create(
+        Costume.objects.create(
             name='Pierwszy',
             description='Opis',
             city='Gdansk',
@@ -154,7 +154,7 @@ class StrojApiTests(TestCase):
             koszula=self.koszula
         )
 
-        url = reverse('create-stroj')
+        url = reverse('create-costume')
         payload = {
             'name': 'Drugi',
             'description': 'Kopia stroju',
@@ -172,7 +172,7 @@ class StrojApiTests(TestCase):
 
     def test_create_stroj_invalid_gender(self):
         """Test error on invalid gender"""
-        url = reverse('create-stroj')
+        url = reverse('create-costume')
         payload = {
             'name': 'Zly Stroj',
             'description': 'Test',
@@ -190,7 +190,7 @@ class StrojApiTests(TestCase):
 
     def test_create_stroj_missing_required_fields(self):
         """Test creation fails when required fields are missing"""
-        url = reverse('create-stroj')
+        url = reverse('create-costume')
         payload = {
             'name': '',
             'gender': 'meski',

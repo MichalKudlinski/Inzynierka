@@ -137,11 +137,11 @@ const DetailPage = () => {
 
         const hasConflict = reservations.some((rental) => {
             const match = isElement
-                ? rental.element_stroju === itemId
-                : rental.stroj === itemId;
+                ? rental.costume === itemId
+                : rental.element === itemId;
             if (!match) return false;
-            const start = new Date(rental.wypozyczono);
-            const end = new Date(rental.zwrot);
+            const start = new Date(rental.rented);
+            const end = new Date(rental.return_date);
             return wypozyczonoDate < end && rentalDate > start;
         });
 
@@ -151,10 +151,10 @@ const DetailPage = () => {
         }
 
         const payload = {
-            rezerwacja: dialogType === "reserve",
-            wypozyczono: wypozyczonoDate.toISOString(),
-            zwrot: rentalDate.toISOString(),
-            [isElement ? "element_stroju" : "stroj"]: itemId,
+            reservation: dialogType === "reserve",
+            rented: wypozyczonoDate.toISOString(),
+            return_date: rentalDate.toISOString(),
+            [isElement ? "element" : "costume"]: itemId,
         };
 
         try {
@@ -255,7 +255,7 @@ const DetailPage = () => {
                         ) : (
                             <>
                                 <Typography variant="h4" gutterBottom>
-                                    Szczegóły {type === "stroj" ? "stroju" : "elementu"}
+                                    Szczegóły {type === "costume" ? "stroju" : "elementu"}
                                 </Typography>
                                 <Typography variant="h5" gutterBottom>
                                     <strong>Nazwa:</strong> {data.name}

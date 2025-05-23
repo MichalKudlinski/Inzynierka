@@ -14,17 +14,17 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.models import ElementStroju, Stroj, WiadomosciKontrol, Wypozyczenie
+from api.models import ControlMessage, Costume, Element, Rental
 
 from .serializers import WypozyczenieSerializer
 
 
-class CreateWypozyczenieView(generics.CreateAPIView):
+class CreateRentalView(generics.CreateAPIView):
     """Tworzenie nowego Wypozyczenia w systemie"""
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     serializer_class = WypozyczenieSerializer
-    queryset = Wypozyczenie.objects.all()
+    queryset = Rental.objects.all()
 
     def post(self, request, *args, **kwargs):
         print("Incoming Request Data:", request.data)
@@ -33,31 +33,33 @@ class CreateWypozyczenieView(generics.CreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-class ListWypozyczenieView(generics.ListAPIView):
+class ListRentalView(generics.ListAPIView):
     """Listowanie Wypozyczen"""
-    permission_classes = (AllowAny,)
-    queryset = Wypozyczenie.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    queryset = Rental.objects.all()
 
     serializer_class = WypozyczenieSerializer
 
-class RetrieveWypozyczenieView(generics.RetrieveAPIView):
+class RetrieveRentalView(generics.RetrieveAPIView):
     """Szczegóły jednego Wypozyczenia"""
-    permission_classes = (AllowAny,)
-    queryset = Wypozyczenie.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    queryset = Rental.objects.all()
 
     serializer_class = WypozyczenieSerializer
 
-class UpdateWypozyczenieView(generics.UpdateAPIView):
+class UpdateRentalView(generics.UpdateAPIView):
     """Zmiana nazwy stroju"""
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-    queryset = Wypozyczenie.objects.all()
+    queryset = Rental.objects.all()
 
     serializer_class = WypozyczenieSerializer
 
-class DestroyWypozyczenieView(generics.DestroyAPIView):
+class DestroyRentalView(generics.DestroyAPIView):
     """Usuwanie stroju"""
-    queryset = Wypozyczenie.objects.all()
+    queryset = Rental.objects.all()
     serializer_class = WypozyczenieSerializer
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
@@ -75,10 +77,10 @@ def send_reminders(request):
 
 
     seven_days_ago = timezone.now() - timedelta(days=7)
-    if WiadomosciKontrol.objects.filter(
+    if ControlMessage.objects.filter(
         user=user,
         name="send_reminders",
-        created__gte=seven_days_ago
+        created_at__gte=seven_days_ago
     ).exists():
         return JsonResponse({
             "error": "Przypomnienia były już wysyłane w ciągu ostatnich 7 dni."
@@ -87,44 +89,44 @@ def send_reminders(request):
     today = timezone.now()
 
 
-    user_stroje = Stroj.objects.filter(user=user)
-    user_elementy = ElementStroju.objects.filter(user=user)
+    user_costumes = Costume.objects.filter(user=user)
+    user_elements = Element.objects.filter(user=user)
 
 
-    stroj_qs = Wypozyczenie.objects.filter(
-        zwrot__gte=today + timedelta(days=2),
-        zwrot__lte=today + timedelta(days=7),
-        stroj__in=user_stroje
+    stroj_qs = Rental.objects.filter(
+        return_date__gte=today + timedelta(days=2),
+        return_date__lte=today + timedelta(days=7),
+        costume__in=user_costumes
     )
-    elem_qs = Wypozyczenie.objects.filter(
-        zwrot__gte=today + timedelta(days=2),
-        zwrot__lte=today + timedelta(days=7),
-        element_stroju__in=user_elementy
+    elem_qs = Rental.objects.filter(
+        return_date__gte=today + timedelta(days=2),
+        return_date__lte=today + timedelta(days=7),
+        element__in=user_elements
     )
-    wypozyczenia = (stroj_qs | elem_qs).distinct()
+    rentals = (stroj_qs | elem_qs).distinct()
 
     sent = 0
-    for w in wypozyczenia:
-        subject = f"Przypomnienie o wypożyczeniu – {w.id}"
+    for r in rentals:
+        subject = f"Przypomnienie o wypożyczeniu – {r.id}"
         message = (
-            f"Cześć {w.user.name},\n\n"
+            f"Cześć {r.user.name},\n\n"
             f"Przypomnienie o zbliżającym się terminie zwrotu stroju:\n"
-            f"• ID wypożyczenia: {w.id}\n"
-            f"• Data wypożyczenia: {w.wypozyczono:%d-%m-%Y}\n"
-            f"• Data zwrotu: {w.zwrot:%d-%m-%Y}\n\n"
+            f"• ID wypożyczenia: {r.id}\n"
+            f"• Data wypożyczenia: {r.rented:%d-%m-%Y}\n"
+            f"• Data zwrotu: {r.return_date:%d-%m-%Y}\n\n"
             "Pozdrawiamy,\nHeritageWear.pl"
         )
         send_mail(
             subject,
             message,
             "heritage.waer.kontakt@gmail.com",
-            [w.user.email],
+            ["michal.kudlinski@gmail.com"],
             fail_silently=False,
         )
         sent += 1
 
-    # log the send_reminders event
-    WiadomosciKontrol.objects.create(
+
+    ControlMessage.objects.create(
         user=user,
         name="send_reminders"
     )

@@ -46,14 +46,14 @@ class UserAdmin(BaseUserAdmin):
 
 admin.site.register(models.User, UserAdmin)
 
-@admin.register(models.ElementStroju)
-class ElementStrojuAdmin(admin.ModelAdmin):
+@admin.register(models.Element)
+class ElementAdmin(admin.ModelAdmin):
     list_display = ['id', 'extid','name', 'size', 'user', 'city','element_type', 'gender','confirmed']
     search_fields = ['name', 'element_type', 'gender','image', 'confirmed']
     list_filter = ['element_type', 'gender','confirmed']
 
-@admin.register(models.Stroj)
-class StrojAdmin(admin.ModelAdmin):
+@admin.register(models.Costume)
+class CostumeAdmin(admin.ModelAdmin):
     list_display = ['id', 'extid', 'name','city', 'gender', 'user',
                     'nakrycie_glowy', 'koszula', 'spodnie', 'kamizelka',
                     'buty', 'akcesoria', 'bizuteria', 'halka', 'sukienka','image', 'confirmed']
@@ -61,13 +61,13 @@ class StrojAdmin(admin.ModelAdmin):
     list_filter = ['gender', 'nakrycie_glowy', 'koszula', 'spodnie', 'kamizelka', 'buty', 'akcesoria', 'bizuteria', 'halka', 'sukienka','confirmed']
     readonly_fields = ['extid']
 
-@admin.register(models.Wypozyczenie)
-class WypozyczenieAdmin(admin.ModelAdmin):
-    list_display = ['id', 'user', 'stroj', 'element_stroju', 'wypozyczono', 'zwrot']
-    search_fields = ['user__username', 'stroj__name', 'element_stroju__name']
-    list_filter = ['user', 'stroj', 'element_stroju', 'wypozyczono', 'zwrot']
-    readonly_fields = ['id', 'wypozyczono']
-    date_hierarchy = 'wypozyczono'
+@admin.register(models.Rental)
+class RentalAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user', 'costume', 'element', 'rented', 'return_date']
+    search_fields = ['user__username', 'costume__name', 'element__name']
+    list_filter = ['user', 'costume', 'element', 'rented', 'return_date']
+    readonly_fields = ['id', 'rented']
+    date_hierarchy = 'rented'
 
     actions = ['convert_reservation_to_rental']
 
@@ -95,8 +95,8 @@ class ImageAdmin(admin.ModelAdmin):
     thumbnail.allow_tags = True
     thumbnail.short_description = 'Thumbnail'
 
-@admin.register(models.Wiadomosci)
-class WiadomosciAdmin(admin.ModelAdmin):
+@admin.register(models.News)
+class NewsAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'text', 'created_at']
     search_fields = ['name', 'text']
     list_filter = ['created_at']
@@ -106,8 +106,8 @@ class WiadomosciAdmin(admin.ModelAdmin):
         return (obj.text[:50] + '...') if len(obj.text) > 50 else obj.text
     short_text.short_description = 'Text Preview'
 
-@admin.register(models.WiadomosciKontrol)
-class WiadomosciKontrolAdmin(admin.ModelAdmin):
+@admin.register(models.ControlMessage)
+class ControlMessageAdmin(admin.ModelAdmin):
     list_display    = ['id', 'name', 'user', 'created_at']
     search_fields   = ['name', 'user__email']
     list_filter     = ['name', 'created_at']
