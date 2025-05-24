@@ -21,9 +21,9 @@ Klasy w bazie danych
 
 
 class UserManager(BaseUserManager):
-
+    """Tworzenie i zarządzanie użytkownikami"""
     def create_user(self, email, name, password=None, **extra_field):
-        """Create regular user"""
+        """Tworzenie użytkownika"""
         if not email:
             raise ValueError("The email field is required.")
         if not name:
@@ -36,7 +36,7 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, name, password=None):
-        """Create a superuser"""
+        """Tworzenie użytkownika dla panelu admina"""
         user = self.create_user(email=email, name=name, password=password)
         user.is_staff = True
         user.is_superuser = True
@@ -53,7 +53,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         is_staff = models.BooleanField(default = False)
         is_renter = models.BooleanField(default = False)
         phone_number = models.CharField(max_length=15, blank=True, null=True)
-
         objects = UserManager()
 
         USERNAME_FIELD = 'name'
@@ -87,18 +86,18 @@ class Element(models.Model):
     confirmed = models.BooleanField(default=False)
 
     ELEMENT_TYPES = [
-        ('nakrycie glowy', 'Nakrycie Glowy'),
-        ('koszula', 'Koszula'),
-        ('spodnie', 'Spodnie'),
-        ('kamizelka', 'Kamizelka'),
-        ('buty', 'Buty'),
-        ('akcesoria', 'Akcesoria'),
-        ('bizuteria','Bizuteria'),
-        ('halka', 'Halka'),
-        ('sukienka', 'Sukienka'),
-    ]
+    ('headwear', 'Headwear'),
+    ('shirt', 'Shirt'),
+    ('trousers', 'Trousers'),
+    ('vest', 'Vest'),
+    ('shoes', 'Shoes'),
+    ('accessories', 'Accessories'),
+    ('jewelry', 'Jewelry'),
+    ('petticoat', 'Petticoat'),
+    ('dress', 'Dress'),
+]
 
-    GENDERS = [('meski', 'Meski'), ('damski','Damski')]
+    GENDERS = [('male', 'Male'), ('female','Female')]
 
     SIZE_CATEGORIES= [('S', 'Small'), ('M', 'Medium'), ('L', 'Large')]
 
@@ -168,21 +167,21 @@ class Costume(models.Model):
     city = models.CharField(max_length=255)
     image = models.ImageField(upload_to='uploads/images/', blank=True, null=True)
 
-    GENDERS = [('meski', 'Meski'), ('damski', 'Damski'), ('unisex', 'Unisex')]
+    GENDERS = [('male', 'Male'), ('female', 'Female'), ('unisex', 'Unisex')]
     SIZE_CATEGORIES= [('S', 'Small'), ('M', 'Medium'), ('L', 'Large')]
 
     gender = models.CharField(max_length=10, choices=GENDERS)
     size = models.CharField(max_length=50, choices=SIZE_CATEGORIES)
 
-    nakrycie_glowy = models.ForeignKey('Element', related_name='nakrycie_glowy', on_delete=models.CASCADE, blank=True, null=True)
-    koszula = models.ForeignKey('Element', related_name='koszula', on_delete=models.CASCADE, blank=True, null=True)
-    spodnie = models.ForeignKey('Element', related_name='spodnie', on_delete=models.CASCADE, blank=True, null=True)
-    kamizelka = models.ForeignKey('Element', related_name='kamizelka', on_delete=models.CASCADE, blank=True, null=True)
-    buty = models.ForeignKey('Element', related_name='buty', on_delete=models.CASCADE, blank=True, null=True)
-    akcesoria = models.ForeignKey('Element', related_name='akcesoria', on_delete=models.CASCADE, blank=True, null=True)
-    bizuteria = models.ForeignKey('Element', related_name='bizuteria', on_delete=models.CASCADE, blank=True, null=True)
-    halka = models.ForeignKey('Element', related_name='halka', on_delete=models.CASCADE, blank=True, null=True)
-    sukienka = models.ForeignKey('Element', related_name='sukienka', on_delete=models.CASCADE, blank=True, null=True)
+    headwear = models.ForeignKey('Element', related_name='headwear', on_delete=models.CASCADE, blank=True, null=True)
+    shirt = models.ForeignKey('Element', related_name='shirt', on_delete=models.CASCADE, blank=True, null=True)
+    trousers = models.ForeignKey('Element', related_name='trousers', on_delete=models.CASCADE, blank=True, null=True)
+    vest = models.ForeignKey('Element', related_name='vest', on_delete=models.CASCADE, blank=True, null=True)
+    shoes = models.ForeignKey('Element', related_name='shoes', on_delete=models.CASCADE, blank=True, null=True)
+    accessories = models.ForeignKey('Element', related_name='accessories', on_delete=models.CASCADE, blank=True, null=True)
+    jewelry = models.ForeignKey('Element', related_name='jewelry', on_delete=models.CASCADE, blank=True, null=True)
+    petticoat = models.ForeignKey('Element', related_name='petticoat', on_delete=models.CASCADE, blank=True, null=True)
+    dress = models.ForeignKey('Element', related_name='dress', on_delete=models.CASCADE, blank=True, null=True)
 
     confirmed = models.BooleanField(default=False)
 
@@ -215,6 +214,7 @@ class Costume(models.Model):
             recipient_list = ["michal.kudlinski@gmail.com"]
 
             try:
+                #Tworzenie pliku jpg z extid
                 generated_img = PilImage.new("RGB", (600, 200), color=(255, 255, 255))
                 draw = ImageDraw.Draw(generated_img)
 

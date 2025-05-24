@@ -186,8 +186,7 @@ class MainPage extends Component {
       console.log("send‑reminders response:", json);
       alert(`Wysłano przypomnienia dla ${json.sent} wypożyczeń.`);
     } catch (err) {
-      console.error(err);
-      alert(err.message);
+      console.error(err)
     }
   }
 
@@ -529,19 +528,25 @@ class MainPage extends Component {
   renderOwnedItems(title, items) {
     const isElement = title.includes("element");
 
+    const elementTypeMapping = {
+      nakrycie_glowy: "headwear",
+      koszula: "shirt",
+      spodnie: "trousers",
+      kamizelka: "vest",
+      buty: "shoes",
+      akcesoria: "accessories",
+      bizuteria: "jewelry",
+      halka: "petticoat",
+      sukienka: "dress",
+    };
+
     return items.length === 0 ? (
       <Typography variant="body1" style={{ textAlign: "center" }}>
         Brak {title.toLowerCase()}
       </Typography>
     ) : (
       items.map((item) => {
-        console.log("Item ID:", item.id);
-        console.log("Item name:", item.name);
-        console.log("Item confirmed value:", item.confirmed, "Type:", typeof item.confirmed);
-
         const isApproved = item.confirmed === true;
-        console.log("Is Approved?", isApproved);
-
         const cardStyle = {
           marginBottom: "15px",
           backgroundColor: isApproved ? "#e6ffe6" : "#f0f0f0",
@@ -549,11 +554,25 @@ class MainPage extends Component {
           opacity: isApproved ? 1 : 0.6,
         };
 
+        // Normalize element_type key by replacing spaces with underscores and lowercasing
+        const normalizedKey = item.element_type
+          ? item.element_type.toLowerCase().replace(/\s+/g, "_")
+          : null;
+
+        const elementTypeEnglish = normalizedKey
+          ? elementTypeMapping[normalizedKey] || item.element_type
+          : "Unknown";
+
         return (
           <Card key={item.id} style={cardStyle}>
             <CardContent>
               <Typography variant="h6">{item.name}</Typography>
-              <Typography varabt="h3">ID: {item.extid}</Typography>
+              <Typography variant="body2">ID: {item.extid}</Typography>
+              {isElement && item.element_type && (
+                <Typography variant="body2">
+                  Type: {elementTypeEnglish}
+                </Typography>
+              )}
               {!isApproved && (
                 <Typography
                   variant="body2"
@@ -592,6 +611,7 @@ class MainPage extends Component {
       })
     );
   }
+
 
   render() {
     const {
@@ -687,7 +707,7 @@ class MainPage extends Component {
             <Button
               variant="contained"
               style={{ backgroundColor: "#337ab7", color: "#fff", fontWeight: "bold", borderRadius: "12px", padding: "14px 24px", fontSize: "16px" }}
-              onClick={() => navigate("/reservations")}
+              onClick={() => navigate("/rentals")}
             >
               Przeglądaj dostępne stroje
             </Button>
@@ -698,7 +718,7 @@ class MainPage extends Component {
             variant="contained"
             color="primary"
             style={{ marginBottom: "20px" }}
-            onClick={() => navigate("/dodaj")}
+            onClick={() => navigate("/add")}
           >
             Dodaj nowy przedmiot
           </Button>

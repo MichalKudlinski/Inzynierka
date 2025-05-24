@@ -99,7 +99,7 @@ class ReservationPage extends Component {
 
         const now = new Date();
         const upcomingReservations = reservationsData.filter(
-          (rental) => new Date(rental.zwrot) > now
+          (rental) => new Date(rental.return_date) > now
         );
 
         this.setState({
@@ -152,8 +152,10 @@ class ReservationPage extends Component {
 
   handleShowRentals = (item, isElement) => {
     const relatedRentals = this.state.reservations.filter((rental) =>
-      isElement ? rental.element_stroju === item.id : rental.stroj === item.id
+      isElement ? rental.element === item.id : rental.costume === item.id
     );
+    console.log("Showing rentals for item:", item);
+    console.log("Related rentals found:", relatedRentals);
     this.setState({ selectedRentals: relatedRentals, rentalDialogOpen: true });
   };
 
@@ -169,9 +171,11 @@ class ReservationPage extends Component {
       rentalDate,
       wypozyczonoDate,
       reservations,
+      user,
     } = this.state;
 
-    // validation
+    const token = localStorage.getItem("token");
+
     if (!wypozyczonoDate || !rentalDate) {
       return this.setState({
         infoDialogOpen: true,
@@ -198,9 +202,12 @@ class ReservationPage extends Component {
       const isSameItem = isElement
         ? rental.element === itemToProcess.id
         : rental.costume === itemToProcess.id;
+
       if (!isSameItem) return false;
+
       const start = new Date(rental.rented);
       const end = new Date(rental.return_date);
+
       return wypozyczonoDate < end && rentalDate > start;
     });
 
@@ -212,9 +219,7 @@ class ReservationPage extends Component {
       });
     }
 
-
-    const token = localStorage.getItem("token");
-    if (!this.state.user?.id || !token) {
+    if (!user?.id || !token) {
       return this.setState({
         infoDialogOpen: true,
         infoDialogMessage: "Brak danych użytkownika.",
@@ -229,6 +234,8 @@ class ReservationPage extends Component {
     };
 
     try {
+      console.log("Sending rental/reservation request:", payload);
+
       const res = await fetch("/api/rentals/create/", {
         method: "POST",
         headers: {
@@ -240,23 +247,33 @@ class ReservationPage extends Component {
         body: JSON.stringify(payload),
       });
 
+      console.log("Create response status:", res.status);
+
       if (!res.ok) throw new Error("Błąd podczas akcji.");
 
-      // success
       this.setState({
         infoDialogOpen: true,
-        infoDialogMessage: `${dialogType === "reserve" ? "Rezerwacja" : "Wypożyczenie"
-          } utworzone pomyślnie!`,
+        infoDialogMessage: `${dialogType === "reserve" ? "Rezerwacja" : "Wypożyczenie"} utworzone pomyślnie!`,
         showDialog: false,
       });
 
-      // reload reservations
+      // Refresh reservationsc
+      console.log("Fetching updated reservations...");
       const updated = await fetch("/api/rentals/list", {
-        headers: { Authorization: `Token ${token}` },
+        headers: {
+          Authorization: `Token ${token}`,
+          "Content-Type": "application/json",
+        },
       });
+
+      console.log("Updated reservations status:", updated.status);
       const reservationsData = await updated.json();
+      console.log("Updated reservations:", reservationsData);
+
       this.setState({ reservations: reservationsData });
+
     } catch (error) {
+      console.error("Rental/reservation action failed:", error);
       this.setState({
         infoDialogOpen: true,
         infoDialogMessage: "Nie udało się wykonać akcji: " + error.message,
@@ -264,6 +281,8 @@ class ReservationPage extends Component {
       });
     }
   };
+
+
 
   cancelAction = () => {
     this.setState({ showDialog: false });
@@ -302,18 +321,33 @@ class ReservationPage extends Component {
       infoDialogMessage,
     } = this.state;
 
+    // English element categories keys matching your data structure
     const elementCategories = [
-      "nakrycie_glowy",
-      "koszula",
-      "kamizelka",
-      "akcesoria",
-      "bizuteria",
-      "halka",
-      "sukienka",
-      "buty",
-      "spodnie",
+      "headwear",
+      "shirt",
+      "vest",
+      "accessories",
+      "jewelry",
+      "petticoat",
+      "dress",
+      "shoes",
+      "trousers",
     ];
 
+    // Mapping for display labels (optional if you want nicer names)
+    const elementTypeMapping = {
+      headwear: "Headwear",
+      shirt: "Shirt",
+      trousers: "Trousers",
+      vest: "Vest",
+      shoes: "Shoes",
+      accessories: "Accessories",
+      jewelry: "Jewelry",
+      petticoat: "Petticoat",
+      dress: "Dress",
+    };
+
+    // Collect element IDs used in costumes
     const elementsInCostume = new Set();
     costumes.forEach((costume) => {
       elementCategories.forEach((category) => {
@@ -322,6 +356,7 @@ class ReservationPage extends Component {
       });
     });
 
+    // Filter items depending on the current view (costume or elements)
     const filteredItems = showFullCostume
       ? costumes
       : elements.filter((item) => {
@@ -354,7 +389,7 @@ class ReservationPage extends Component {
           }}
         >
           <Typography variant="h4" style={{ margin: 0 }}>
-            Dostępne elementy i stroje ludowe
+            Available Traditional Costumes and Elements
           </Typography>
         </div>
 
@@ -369,7 +404,7 @@ class ReservationPage extends Component {
               border: "3px solid #d4a373",
             }}
           >
-            Wróć
+            Back
           </Button>
 
           <Button
@@ -382,7 +417,7 @@ class ReservationPage extends Component {
               border: "3px solid #d4a373",
             }}
           >
-            {showFullCostume ? "Pokaż elementy" : "Pokaż stroje"}
+            {showFullCostume ? "Show Elements" : "Show Costumes"}
           </Button>
 
           {!showFullCostume && (
@@ -403,7 +438,7 @@ class ReservationPage extends Component {
                   }
                   color="primary"
                 >
-                  {category}
+                  {elementTypeMapping[category]}
                 </Button>
               ))}
             </div>
@@ -429,17 +464,18 @@ class ReservationPage extends Component {
                   color: "#a52a2a",
                 }}
               >
-                Brak dostępnych{" "}
-                {showFullCostume ? "strojów" : "elementów stroju"} do
-                wyświetlenia.
+                No available {showFullCostume ? "costumes" : "elements"} to display.
               </Typography>
             ) : (
               filteredItems.map((item) => (
-                <Card key={item.id} style={{
-                  backgroundColor: "#ffebcc",
-                  borderRadius: "12px",
-                  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                }}>
+                <Card
+                  key={item.id}
+                  style={{
+                    backgroundColor: "#ffebcc",
+                    borderRadius: "12px",
+                    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                  }}
+                >
                   <CardContent>
                     <Typography variant="h6">{item.name}</Typography>
                     <Typography variant="body2">{item.description}</Typography>
@@ -452,7 +488,7 @@ class ReservationPage extends Component {
                       }}
                       onClick={() => this.handleReserve(item, !showFullCostume)}
                     >
-                      Rezerwuj
+                      Reserve
                     </Button>
                     <Button
                       fullWidth
@@ -463,7 +499,7 @@ class ReservationPage extends Component {
                       }}
                       onClick={() => this.handleRental(item, !showFullCostume)}
                     >
-                      Wypożycz
+                      Rent
                     </Button>
                     <Button
                       fullWidth
@@ -477,7 +513,7 @@ class ReservationPage extends Component {
                         )
                       }
                     >
-                      Szczegóły
+                      Details
                     </Button>
                     <Button
                       fullWidth
@@ -487,11 +523,9 @@ class ReservationPage extends Component {
                         borderColor: "#4caf50",
                         color: "#4caf50",
                       }}
-                      onClick={() =>
-                        this.handleShowRentals(item, !showFullCostume)
-                      }
+                      onClick={() => this.handleShowRentals(item, !showFullCostume)}
                     >
-                      Wypożyczenia
+                      Rentals
                     </Button>
                   </CardContent>
                 </Card>
@@ -502,12 +536,12 @@ class ReservationPage extends Component {
 
         {/* DIALOG: date picker */}
         <Dialog open={showDialog} onClose={this.cancelAction}>
-          <DialogTitle>Potwierdzenie</DialogTitle>
+          <DialogTitle>Confirmation</DialogTitle>
           <DialogContent>
             <Typography variant="body1">{dialogMessage}</Typography>
             <TextField
               type="datetime-local"
-              label="Data wypożyczenia"
+              label="Rental Date"
               fullWidth
               InputLabelProps={{ shrink: true }}
               value={
@@ -528,47 +562,44 @@ class ReservationPage extends Component {
             <br />
             <TextField
               type="datetime-local"
-              label="Data zwrotu"
+              label="Return Date"
               fullWidth
               InputLabelProps={{ shrink: true }}
               value={
                 rentalDate
                   ? new Date(
-                    rentalDate.getTime() -
-                    rentalDate.getTimezoneOffset() * 60000
+                    rentalDate.getTime() - rentalDate.getTimezoneOffset() * 60000
                   )
                     .toISOString()
                     .slice(0, 16)
                   : ""
               }
-              onChange={(e) =>
-                this.setState({ rentalDate: new Date(e.target.value) })
-              }
+              onChange={(e) => this.setState({ rentalDate: new Date(e.target.value) })}
             />
           </DialogContent>
           <DialogActions>
             <Button onClick={this.cancelAction} color="secondary">
-              Anuluj
+              Cancel
             </Button>
             <Button onClick={this.confirmAction} color="primary">
-              Potwierdź
+              Confirm
             </Button>
           </DialogActions>
         </Dialog>
 
         {/* DIALOG: existing rentals */}
         <Dialog open={rentalDialogOpen} onClose={this.handleCloseRentalDialog}>
-          <DialogTitle>Lista wypożyczeń</DialogTitle>
+          <DialogTitle>Rental List</DialogTitle>
           <DialogContent>
             {selectedRentals.length === 0 ? (
-              <Typography>Brak wypożyczeń dla tego elementu/stroju.</Typography>
+              <Typography>No rentals found for this item/costume.</Typography>
             ) : (
               selectedRentals.map((rental, i) => (
                 <div key={i} style={{ marginBottom: "10px" }}>
                   <Typography variant="body2">
-                    {rental.reservation ? "Rezerwacja" : "Wypożyczenie"} od:{" "}
-                    {new Date(rental.wypozyczono).toLocaleString()} do:{" "}
-                    {new Date(rental.zwrot).toLocaleString()}
+                    {rental.reservation ? "Reservation" : "Rental"} from:{" "}
+                    {new Date(rental.rented).toLocaleString()} to:{" "}
+                    {new Date(rental.return_date).toLocaleString()}
                   </Typography>
                 </div>
               ))
@@ -576,7 +607,7 @@ class ReservationPage extends Component {
           </DialogContent>
           <DialogActions>
             <Button onClick={this.handleCloseRentalDialog} color="primary">
-              Zamknij
+              Close
             </Button>
           </DialogActions>
         </Dialog>
@@ -586,7 +617,7 @@ class ReservationPage extends Component {
           open={infoDialogOpen}
           onClose={() => this.setState({ infoDialogOpen: false })}
         >
-          <DialogTitle>Informacja</DialogTitle>
+          <DialogTitle>Information</DialogTitle>
           <DialogContent>
             <Typography>{infoDialogMessage}</Typography>
           </DialogContent>
@@ -602,6 +633,7 @@ class ReservationPage extends Component {
       </div>
     );
   }
+
 }
 
 export default withNavigation(ReservationPage);

@@ -44,23 +44,30 @@ class UserAdmin(BaseUserAdmin):
         }),
     )
 
+#Rejestrowanie poszczególnych modeli w panelu admina
 admin.site.register(models.User, UserAdmin)
-
+#Element
 @admin.register(models.Element)
 class ElementAdmin(admin.ModelAdmin):
+    #Pola, które wyświetlają się w podglądzie elementu
     list_display = ['id', 'extid','name', 'size', 'user', 'city','element_type', 'gender','confirmed']
+    #Pola, po których możemy wyszukiwać
     search_fields = ['name', 'element_type', 'gender','image', 'confirmed']
+    #Pola, po których możemy filtrować
     list_filter = ['element_type', 'gender','confirmed']
 
+#Costume
 @admin.register(models.Costume)
 class CostumeAdmin(admin.ModelAdmin):
-    list_display = ['id', 'extid', 'name','city', 'gender', 'user',
-                    'nakrycie_glowy', 'koszula', 'spodnie', 'kamizelka',
-                    'buty', 'akcesoria', 'bizuteria', 'halka', 'sukienka','image', 'confirmed']
+    list_display = ['id', 'extid', 'name', 'city', 'gender', 'user',
+                    'headwear', 'shirt', 'trousers', 'vest',
+                    'shoes', 'accessories', 'jewelry', 'petticoat', 'dress', 'image', 'confirmed']
     search_fields = ['name', 'gender']
-    list_filter = ['gender', 'nakrycie_glowy', 'koszula', 'spodnie', 'kamizelka', 'buty', 'akcesoria', 'bizuteria', 'halka', 'sukienka','confirmed']
+    list_filter = ['gender', 'headwear', 'shirt', 'trousers', 'vest',
+                   'shoes', 'accessories', 'jewelry', 'petticoat', 'dress', 'confirmed']
     readonly_fields = ['extid']
 
+#Rental
 @admin.register(models.Rental)
 class RentalAdmin(admin.ModelAdmin):
     list_display = ['id', 'user', 'costume', 'element', 'rented', 'return_date']
@@ -76,6 +83,7 @@ class RentalAdmin(admin.ModelAdmin):
         self.message_user(request, f"{updated} reservations converted to rentals.")
     convert_reservation_to_rental.short_description = "Convert selected reservations to rentals"
 
+#IMage
 @admin.register(models.Image)
 class ImageAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'thumbnail', 'uploaded_at']
@@ -94,7 +102,7 @@ class ImageAdmin(admin.ModelAdmin):
         return self.image_preview(obj)
     thumbnail.allow_tags = True
     thumbnail.short_description = 'Thumbnail'
-
+#News
 @admin.register(models.News)
 class NewsAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'text', 'created_at']
@@ -105,7 +113,7 @@ class NewsAdmin(admin.ModelAdmin):
     def short_text(self, obj):
         return (obj.text[:50] + '...') if len(obj.text) > 50 else obj.text
     short_text.short_description = 'Text Preview'
-
+#ControlMessage
 @admin.register(models.ControlMessage)
 class ControlMessageAdmin(admin.ModelAdmin):
     list_display    = ['id', 'name', 'user', 'created_at']

@@ -29,6 +29,13 @@ const DetailPage = () => {
     const [reservations, setReservations] = useState([]);
     const [user, setUser] = useState(null);
 
+    // Map Polish URL types to English for API endpoints and display
+    const typeMapping = {
+        stroj: "costume",
+        element: "element",
+    };
+    const englishType = typeMapping[type] || type;
+
     useEffect(() => {
         if (!id || !type) {
             setErrorMessage("Missing URL parameters.");
@@ -37,12 +44,14 @@ const DetailPage = () => {
         }
 
         const token = localStorage.getItem("token");
+        const authHeaders = {
+            Authorization: `Token ${token}`,
+            "Content-Type": "application/json",
+        };
+
         if (token) {
             fetch("/api/user/me", {
-                headers: {
-                    Authorization: `Token ${token}`,
-                    "Content-Type": "application/json",
-                },
+                headers: authHeaders,
             })
                 .then((res) => res.json())
                 .then((userData) => {
@@ -55,17 +64,19 @@ const DetailPage = () => {
                     setIsRenter(userData.is_renter);
                 })
                 .catch(() => {
-                    setErrorMessage("Błąd pobierania użytkownika.");
+                    setErrorMessage("Error fetching user data.");
                     setLoading(false);
                 });
         }
 
         const endpoint =
-            type === "stroj"
+            englishType === "costume"
                 ? `/api/costumes/costume${id}/detail`
                 : `/api/costumes/element${id}/detail`;
 
-        fetch(endpoint)
+        fetch(endpoint, {
+            headers: authHeaders,
+        })
             .then((res) => {
                 if (!res.ok) throw new Error("Failed to fetch details.");
                 return res.json();
@@ -80,7 +91,7 @@ const DetailPage = () => {
             });
 
         fetch("/api/rentals/list", {
-            headers: { Authorization: `Token ${token}` },
+            headers: authHeaders,
         })
             .then((res) => res.json())
             .then(setReservations)
@@ -117,28 +128,28 @@ const DetailPage = () => {
 
     const confirmAction = async () => {
         if (!wypozyczonoDate || !rentalDate) {
-            alert("Proszę wybrać obie daty.");
+            alert("Please select both dates.");
             return;
         }
 
         const now = new Date();
         if (wypozyczonoDate < now || rentalDate < now) {
-            alert("Daty muszą być w przyszłości.");
+            alert("Dates must be in the future.");
             return;
         }
 
         if (wypozyczonoDate >= rentalDate) {
-            alert("Data zwrotu musi być po dacie wypożyczenia.");
+            alert("Return date must be after rental date.");
             return;
         }
 
-        const isElement = type !== "stroj";
+        const isElement = englishType !== "costume";
         const itemId = data.id;
 
         const hasConflict = reservations.some((rental) => {
             const match = isElement
-                ? rental.costume === itemId
-                : rental.element === itemId;
+                ? rental.element === itemId
+                : rental.costume === itemId;
             if (!match) return false;
             const start = new Date(rental.rented);
             const end = new Date(rental.return_date);
@@ -146,7 +157,7 @@ const DetailPage = () => {
         });
 
         if (hasConflict) {
-            alert("Wybrane daty kolidują z istniejącą rezerwacją.");
+            alert("Selected dates conflict with an existing reservation.");
             return;
         }
 
@@ -169,22 +180,22 @@ const DetailPage = () => {
                 body: JSON.stringify(payload),
             });
 
-            if (!res.ok) throw new Error("Błąd podczas zapisu.");
+            if (!res.ok) throw new Error("Error saving data.");
 
             const result = await res.json();
             alert(
-                `${dialogType === "reserve" ? "Rezerwacja" : "Wypożyczenie"
-                } utworzono! ID: ${result.id}`
+                `${dialogType === "reserve" ? "Reservation" : "Rental"
+                } created! ID: ${result.id}`
             );
             setConfirmationMessage(
-                `${dialogType === "reserve" ? "Rezerwacja" : "Wypożyczenie"
-                } zakończona pomyślnie.`
+                `${dialogType === "reserve" ? "Reservation" : "Rental"
+                } completed successfully.`
             );
             setShowDialog(false);
             setWypozyczonoDate(null);
             setRentalDate(null);
         } catch (error) {
-            alert("Nie udało się wykonać akcji: " + error.message);
+            alert("Action failed: " + error.message);
             setShowDialog(false);
         }
     };
@@ -213,7 +224,7 @@ const DetailPage = () => {
                 }}
             >
                 <Typography variant="h4" style={{ flexGrow: 1, textAlign: "center" }}>
-                    HeritageWear Polska
+                    HeritageWear Poland
                 </Typography>
             </div>
 
@@ -255,22 +266,22 @@ const DetailPage = () => {
                         ) : (
                             <>
                                 <Typography variant="h4" gutterBottom>
-                                    Szczegóły {type === "costume" ? "stroju" : "elementu"}
+                                    Details of {englishType}
                                 </Typography>
                                 <Typography variant="h5" gutterBottom>
-                                    <strong>Nazwa:</strong> {data.name}
+                                    <strong>Name:</strong> {data.name}
                                 </Typography>
                                 <Typography>
-                                    <strong>Płeć:</strong> {data.gender}
+                                    <strong>Gender:</strong> {data.gender}
                                 </Typography>
                                 <Typography>
-                                    <strong>Rozmiar:</strong> {data.size}
+                                    <strong>Size:</strong> {data.size}
                                 </Typography>
                                 <Typography>
-                                    <strong>Miasto:</strong> {data.city}
+                                    <strong>City:</strong> {data.city}
                                 </Typography>
                                 <Typography style={{ marginTop: 20 }}>
-                                    <strong>Opis:</strong>
+                                    <strong>Description:</strong>
                                     <br />
                                     {data.description}
                                 </Typography>
@@ -278,7 +289,7 @@ const DetailPage = () => {
                                 {data.name && (
                                     <img
                                         src={`/media/uploads/images/${data.name}.jpg`}
-                                        alt="Zdjęcie"
+                                        alt="Photo"
                                         style={{
                                             width: 400,
                                             height: 400,
@@ -296,118 +307,57 @@ const DetailPage = () => {
                                             variant="contained"
                                             style={{
                                                 marginRight: 15,
-                                                backgroundColor: "#a52a2a", // Czerwony jak w ReservationPage
+                                                backgroundColor: "#a52a2a",
                                                 color: "#fff",
                                             }}
-                                            onMouseEnter={(e) =>
-                                                (e.target.style.backgroundColor = "#872222")
-                                            }
-                                            onMouseLeave={(e) =>
-                                                (e.target.style.backgroundColor = "#a52a2a")
-                                            }
                                         >
-                                            Wypożycz
+                                            Rent
                                         </Button>
-
                                         <Button
-                                            variant="contained"
                                             onClick={handleReservation}
+                                            variant="contained"
                                             style={{
-                                                backgroundColor: "#337ab7", // Niebieski jak w ReservationPage
+                                                backgroundColor: "#8b0000",
                                                 color: "#fff",
-                                                marginLeft: 8,
                                             }}
-                                            onMouseEnter={(e) =>
-                                                (e.target.style.backgroundColor = "#23527c")
-                                            }
-                                            onMouseLeave={(e) =>
-                                                (e.target.style.backgroundColor = "#337ab7")
-                                            }
                                         >
-                                            Rezerwuj
+                                            Reserve
                                         </Button>
                                     </div>
-                                )}
-                                <Button
-                                    onClick={() => navigate(-1)}
-                                    variant="outlined"
-                                    style={{ marginTop: 30 }}
-                                >
-                                    ← Powrót
-                                </Button>
-                                {confirmationMessage && (
-                                    <Typography color="primary" style={{ marginTop: 20 }}>
-                                        {confirmationMessage}
-                                    </Typography>
                                 )}
                             </>
                         )}
                     </Paper>
                 </div>
-            </div>
-
-            {/* FOOTER */}
-            <div
-                style={{
-                    borderTop: "3px solid #d4a373",
-                    backgroundColor: "#5e554a",
-                    color: "#fff",
-                    textAlign: "center",
-                    padding: "15px",
-                    fontSize: "0.9rem",
-                }}
-            >
-                Kontakt: kontakt@heritagewear.pl | Tel: +48 123 456 789
-            </div>
-
-            {/* DIALOG */}
-            <Dialog open={showDialog} onClose={() => setShowDialog(false)}>
-                <DialogTitle>Potwierdzenie</DialogTitle>
+            </div>   <Dialog open={showDialog} onClose={() => setShowDialog(false)}>
+                <DialogTitle>{dialogType === "reserve" ? "Reservation" : "Rental"} Date</DialogTitle>
                 <DialogContent>
                     <Typography>{dialogMessage}</Typography>
                     <TextField
-                        label="Data wypożyczenia"
+                        label="Rental Start Date"
                         type="datetime-local"
-                        fullWidth
                         InputLabelProps={{ shrink: true }}
-                        value={
-                            wypozyczonoDate
-                                ? new Date(
-                                    wypozyczonoDate.getTime() -
-                                    wypozyczonoDate.getTimezoneOffset() * 60000
-                                )
-                                    .toISOString()
-                                    .slice(0, 16)
-                                : ""
-                        }
+                        value={wypozyczonoDate ? wypozyczonoDate.toISOString().slice(0, 16) : ""}
                         onChange={(e) => setWypozyczonoDate(new Date(e.target.value))}
-                        style={{ marginTop: 16 }}
+                        style={{ marginTop: 20 }}
+                        fullWidth
                     />
                     <TextField
-                        label="Data zwrotu"
+                        label="Return Date"
                         type="datetime-local"
-                        fullWidth
                         InputLabelProps={{ shrink: true }}
-                        value={
-                            rentalDate
-                                ? new Date(
-                                    rentalDate.getTime() -
-                                    rentalDate.getTimezoneOffset() * 60000
-                                )
-                                    .toISOString()
-                                    .slice(0, 16)
-                                : ""
-                        }
+                        value={rentalDate ? rentalDate.toISOString().slice(0, 16) : ""}
                         onChange={(e) => setRentalDate(new Date(e.target.value))}
-                        style={{ marginTop: 16 }}
+                        style={{ marginTop: 20 }}
+                        fullWidth
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setShowDialog(false)} color="secondary">
-                        Anuluj
+                    <Button onClick={() => setShowDialog(false)} color="primary">
+                        Cancel
                     </Button>
                     <Button onClick={confirmAction} color="primary">
-                        Potwierdź
+                        Confirm
                     </Button>
                 </DialogActions>
             </Dialog>

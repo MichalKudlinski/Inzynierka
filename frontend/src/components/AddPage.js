@@ -106,21 +106,20 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const elementTypeMapping = {
-  nakrycie_glowy: 'nakrycie głowy',
-  koszula: 'koszula',
-  spodnie: 'spodnie',
-  kamizelka: 'kamizelka',
-  buty: 'buty',
-  akcesoria: 'akcesoria',
-  bizuteria: 'bizuteria',
-  halka: 'halka',
-  sukienka: 'sukienka',
+  headwear: 'Nakrycie głowy',
+  shirt: 'Koszula',
+  trousers: 'Spodnie',
+  vest: 'Kamizelka',
+  shoes: 'Buty',
+  accessories: 'Akcesoria',
+  jewelry: 'Biżuteria',
+  petticoat: 'Haleczka',
+  dress: 'Suknia',
 };
 
 const AddPage = () => {
   const classes = useStyles();
   const navigate = useNavigate();
-
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [user, setUser] = useState(null);
@@ -137,16 +136,15 @@ const AddPage = () => {
     size: '',
     element_type: '',
     image: null,
-
-    nakrycie_glowy: '',
-    koszula: '',
-    spodnie: '',
-    kamizelka: '',
-    buty: '',
-    akcesoria: '',
-    bizuteria: '',
-    halka: '',
-    sukienka: '',
+    headwear: '',
+    shirt: '',
+    trousers: '',
+    vest: '',
+    shoes: '',
+    accessories: '',
+    jewelry: '',
+    petticoat: '',
+    dress: '',
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -155,24 +153,26 @@ const AddPage = () => {
     setLoading(true);
     const token = localStorage.getItem('token');
     if (!token) {
-      setErrorMessage('Nie znaleziono tokenu użytkownika.');
+      setErrorMessage('Brak tokenu użytkownika.');
       navigate('/login');
       return;
     }
-    const headers = {
-      Authorization: `Token ${token}`,
-      'Content-Type': 'application/json',
-    };
     try {
+      const headers = {
+        Authorization: `Token ${token}`,
+        'Content-Type': 'application/json',
+      };
+
       const userRes = await fetch('/api/user/me', { headers });
-      if (!userRes.ok) throw new Error('Błąd pobierania użytkownika.');
+      if (!userRes.ok) throw new Error('Nie udało się pobrać danych użytkownika.');
       const userData = await userRes.json();
 
-      if (!userData || !userData.id || !userData.is_renter) {
-        setErrorMessage('Brak uprawnień do dodawania elementów.');
+      if (!userData?.id || !userData?.is_renter) {
+        setErrorMessage('Nie masz uprawnień do dodawania elementów.');
         navigate('/');
         return;
       }
+
       setUser(userData);
 
       const [strojeRes, elementStrojeRes] = await Promise.all([
@@ -181,7 +181,7 @@ const AddPage = () => {
       ]);
 
       if (!strojeRes.ok || !elementStrojeRes.ok) {
-        throw new Error('Błąd pobierania strojów i elementów stroju.');
+        throw new Error('Błąd podczas pobierania danych.');
       }
 
       const strojeData = await strojeRes.json();
@@ -190,7 +190,7 @@ const AddPage = () => {
       setStroje(strojeData.filter((s) => s.user === userData.id));
       setElementStroje(elementStrojeData.filter((e) => e.user === userData.id));
     } catch (err) {
-      setErrorMessage(err.message || 'Coś poszło nie tak.');
+      setErrorMessage(err.message);
     } finally {
       setLoading(false);
     }
@@ -212,107 +212,59 @@ const AddPage = () => {
     e.preventDefault();
     setSubmitting(true);
     const token = localStorage.getItem('token');
+    const form = new FormData();
 
     try {
-      const form = new FormData();
-
       if (addingOutfit) {
         Object.entries(formData).forEach(([key, value]) => {
-          if (value !== null) {
-            form.append(key, value);
-          }
+          if (value !== null) form.append(key, value);
         });
-        if (user && user.id) {
-          form.append('user', user.id);
-        }
+        form.append('user', user.id);
 
         const res = await fetch('/api/costumes/costume/create', {
           method: 'POST',
-          headers: {
-            Authorization: `Token ${token}`,
-          },
+          headers: { Authorization: `Token ${token}` },
           body: form,
         });
 
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(JSON.stringify(err));
-        }
-        alert('Strój dodany pomyślnie!');
-        setFormData(initialFormData);
-        await fetchUserAndItems();
+        if (!res.ok) throw new Error('Nie udało się dodać stroju.');
 
+        alert('Stroje zostały dodane.');
       } else {
         Object.entries(formData).forEach(([key, value]) => {
-          if (
-            value !== null &&
-            ![
-              'nakrycie_glowy',
-              'koszula',
-              'spodnie',
-              'kamizelka',
-              'buty',
-              'akcesoria',
-              'bizuteria',
-              'halka',
-              'sukienka',
-            ].includes(key)
-          ) {
+          if (value !== null && !elementTypeMapping[key]) {
             form.append(key, value);
           }
         });
-        if (user && user.id) {
-          form.append('user', user.id);
-        }
+        form.append('user', user.id);
 
         const res = await fetch('/api/costumes/element/create', {
           method: 'POST',
-          headers: {
-            Authorization: `Token ${token}`,
-          },
+          headers: { Authorization: `Token ${token}` },
           body: form,
         });
 
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(JSON.stringify(err));
-        }
-        alert('Element dodany pomyślnie!');
-        setFormData(initialFormData);
-        await fetchUserAndItems();
+        if (!res.ok) throw new Error('Nie udało się dodać elementu.');
+
+        alert('Element został dodany.');
       }
+      setFormData(initialFormData);
+      await fetchUserAndItems();
     } catch (err) {
-      console.error('Error submitting form:', err);
-
-      let message = 'Błąd przy dodawaniu elementu/stroju.';
-      if (err instanceof Error) {
-        try {
-          const parsed = JSON.parse(err.message);
-          if (typeof parsed === 'object') {
-            const messages = Object.values(parsed)
-              .flat()
-              .join('\n');
-            message = messages;
-          }
-        } catch {
-          message = err.message;
-        }
-      }
-
-      alert(`Nie udało się dodać elementu/stroju:\n${message}`);
+      alert(`Błąd: ${err.message}`);
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Updated render function for items (costumes or elements)
+
   const renderItems = (title, items) => {
     const isElement = title.toLowerCase().includes('element');
 
     if (items.length === 0) {
       return (
         <Typography variant="body1" style={{ textAlign: 'center' }}>
-          Brak {title.toLowerCase()}
+          Brak {isElement ? 'elementów' : 'strojów'}
         </Typography>
       );
     }
@@ -339,7 +291,7 @@ const AddPage = () => {
                 variant="body2"
                 style={{ color: '#999', fontStyle: 'italic', marginBottom: 10 }}
               >
-                Oczekiwanie na zatwierdzenie
+                Oczekuje na zatwierdzenie
               </Typography>
             )}
             <Button
@@ -347,7 +299,7 @@ const AddPage = () => {
               color="primary"
               style={{ marginTop: 10, marginRight: 10 }}
               onClick={() =>
-                navigate(`/details/${isElement ? 'element' : 'stroj'}/${item.id}`)
+                navigate(`/details/${isElement ? 'element' : 'costume'}/${item.id}`)
               }
               disabled={!isApproved}
             >
@@ -370,10 +322,9 @@ const AddPage = () => {
     });
   };
 
+
   const openDeleteConfirmation = (item) => {
-    // Implement your delete confirmation dialog logic here
-    // For now, just confirm and delete:
-    if (window.confirm(`Czy na pewno chcesz usunąć ${item.name}?`)) {
+    if (window.confirm(`Czy na pewno chcesz usunąć "${item.name}"?`)) {
       deleteItem(item);
     }
   };
@@ -382,16 +333,16 @@ const AddPage = () => {
     const token = localStorage.getItem('token');
     try {
       const res = await fetch(
-        `/api/costumes/${item.type === 'element' ? 'element' : 'costume'}/delete/${item.id}`,
+        `/api/costumes/${item.type === 'element' ? 'element' : 'costume'}/${item.id}/delete`,
         {
           method: 'DELETE',
           headers: { Authorization: `Token ${token}` },
         }
       );
       if (!res.ok) {
-        throw new Error('Błąd usuwania elementu/stroju');
+        throw new Error('Usunięcie nie powiodło się');
       }
-      alert(`${item.name} został usunięty.`);
+      alert(`"${item.name}" został usunięty.`);
       await fetchUserAndItems();
     } catch (err) {
       alert(`Nie udało się usunąć: ${err.message}`);
@@ -400,14 +351,14 @@ const AddPage = () => {
 
   return (
     <div className={classes.root}>
-      <Button className={classes.backButton} onClick={() => navigate('/')}>
+      <Button className={classes.backButton} onClick={() => navigate('/main')}>
         Powrót
       </Button>
       <div className={classes.container}>
         <div className={classes.formWrapper}>
           <Paper className={classes.paper} elevation={3}>
             <Typography variant="h5" gutterBottom>
-              {addingOutfit ? 'Dodaj strój' : 'Dodaj element stroju'}
+              {addingOutfit ? 'Dodaj strój' : 'Dodaj element kostiumu'}
             </Typography>
             <form onSubmit={handleSubmit} noValidate>
               <TextField
@@ -442,106 +393,109 @@ const AddPage = () => {
                 <>
                   <TextField
                     select
+                    fullWidth
                     label="Płeć"
                     name="gender"
                     value={formData.gender}
                     onChange={handleChange}
-                    fullWidth
                     required
                     className={classes.formControl}
                   >
-                    <MenuItem value="kobieta">Kobieta</MenuItem>
-                    <MenuItem value="mężczyzna">Mężczyzna</MenuItem>
-                    <MenuItem value="inne">Inne</MenuItem>
+                    <MenuItem value="male">Mężczyzna</MenuItem>
+                    <MenuItem value="female">Kobieta</MenuItem>
+                    <MenuItem value="unisex">Unisex</MenuItem>
                   </TextField>
-
                   <TextField
-                    select
+                    fullWidth
                     label="Rozmiar"
                     name="size"
                     value={formData.size}
                     onChange={handleChange}
-                    fullWidth
-                    required
                     className={classes.formControl}
-                  >
-                    <MenuItem value="S">S</MenuItem>
-                    <MenuItem value="M">M</MenuItem>
-                    <MenuItem value="L">L</MenuItem>
-                    <MenuItem value="XL">XL</MenuItem>
-                  </TextField>
-
+                  />
                   <TextField
                     select
-                    label="Typ elementu stroju"
+                    fullWidth
+                    label="Typ elementu"
                     name="element_type"
                     value={formData.element_type}
                     onChange={handleChange}
-                    fullWidth
                     required
                     className={classes.formControl}
                   >
-                    {Object.values(elementTypeMapping).map((type) => (
-                      <MenuItem key={type} value={type}>
-                        {type}
+                    {Object.entries(elementTypeMapping).map(([value, label]) => (
+                      <MenuItem key={value} value={value}>
+                        {label}
                       </MenuItem>
                     ))}
                   </TextField>
                 </>
               )}
 
+              <div className={classes.fileInputWrapper}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Płeć"
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  required
+                  className={classes.formControl}
+                >
+                  <MenuItem value="male">Mężczyzna</MenuItem>
+                  <MenuItem value="female">Kobieta</MenuItem>
+                  <MenuItem value="unisex">Unisex</MenuItem>
+                </TextField>
+                <TextField
+                  fullWidth
+                  label="Rozmiar"
+                  name="size"
+                  value={formData.size}
+                  onChange={handleChange}
+                  className={classes.formControl}
+                />
+                <input
+                  accept="image/*"
+                  className={classes.hiddenInput}
+                  id="image-upload"
+                  type="file"
+                  name="image"
+                  onChange={handleChange}
+                />
+                <label htmlFor="image-upload">
+                  <Button
+                    variant="contained"
+                    component="span"
+                    className={classes.fileButton}
+                  >
+                    Wgraj zdjęcie
+                  </Button>
+                </label>
+                {formData.image && (
+                  <span style={{ marginLeft: 10 }}>{formData.image.name}</span>
+                )}
+              </div>
+
               {addingOutfit && (
                 <>
-                  <TextField
-                    select
-                    label="Płeć"
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleChange}
-                    fullWidth
-                    required
-                    className={classes.formControl}
-                  >
-                    <MenuItem value="kobieta">Kobieta</MenuItem>
-                    <MenuItem value="mężczyzna">Mężczyzna</MenuItem>
-                    <MenuItem value="inne">Inne</MenuItem>
-                  </TextField>
-
-                  <TextField
-                    select
-                    label="Rozmiar"
-                    name="size"
-                    value={formData.size}
-                    onChange={handleChange}
-                    fullWidth
-                    required
-                    className={classes.formControl}
-                  >
-                    <MenuItem value="S">S</MenuItem>
-                    <MenuItem value="M">M</MenuItem>
-                    <MenuItem value="L">L</MenuItem>
-                    <MenuItem value="XL">XL</MenuItem>
-                  </TextField>
-
+                  <Typography variant="subtitle1" style={{ marginTop: 20 }}>
+                    Wybierz elementy kostiumu dla tego stroju:
+                  </Typography>
                   {Object.keys(elementTypeMapping).map((key) => (
                     <TextField
                       key={key}
                       select
+                      fullWidth
                       label={elementTypeMapping[key]}
                       name={key}
                       value={formData[key]}
                       onChange={handleChange}
-                      fullWidth
                       className={classes.formControl}
                     >
-                      <MenuItem value="">-- Wybierz --</MenuItem>
+                      <MenuItem value="">Brak</MenuItem>
                       {elementStroje
-                        .filter(
-                          (el) =>
-                            el.confirmed === true &&
-                            el.element_type.toLowerCase().trim() ===
-                            elementTypeMapping[key].toLowerCase().trim()
-                        )
+                        .filter((el) => el.element_type === key)
                         .map((el) => (
                           <MenuItem key={el.id} value={el.id}>
                             {el.name}
@@ -552,72 +506,65 @@ const AddPage = () => {
                 </>
               )}
 
-              <div className={classes.fileInputWrapper}>
-                <input
-                  accept="image/*"
-                  className={classes.hiddenInput}
-                  id="image-upload"
-                  type="file"
-                  name="image"
-                  onChange={handleChange}
-                />
-                <label htmlFor="image-upload">
-                  <Button component="span" className={classes.fileButton}>
-                    Wybierz zdjęcie
-                  </Button>
-                </label>
-                {formData.image && <Typography style={{ marginLeft: 10 }}>{formData.image.name}</Typography>}
-              </div>
-
               <Button
                 type="submit"
                 variant="contained"
                 disabled={submitting}
                 className={classes.submitButton}
               >
-                {addingOutfit ? 'Dodaj strój' : 'Dodaj element'}
+                {submitting ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  'Zatwierdź'
+                )}
               </Button>
-              <Button
-                variant="text"
-                onClick={() => setAddingOutfit((prev) => !prev)}
-                style={{ marginTop: 12 }}
-              >
-                {addingOutfit ? 'Dodaj pojedynczy element' : 'Dodaj cały strój'}
-              </Button>
-
-              {errorMessage && (
-                <Typography variant="body1" color="error" className={classes.errorText}>
-                  {errorMessage}
-                </Typography>
-              )}
             </form>
+
+            <Button
+              style={{ marginTop: 15 }}
+              variant="outlined"
+              onClick={() => setAddingOutfit((prev) => !prev)}
+            >
+              {addingOutfit ? 'Dodaj element zamiast tego' : 'Dodaj strój zamiast tego'}
+            </Button>
+
+            {errorMessage && (
+              <Typography className={classes.errorText}>{errorMessage}</Typography>
+            )}
           </Paper>
         </div>
+
         <div className={classes.listWrapper}>
-          <Typography variant="h6" style={{ marginBottom: 15 }}>
-            Elementy stroju
+          <Typography variant="h6" gutterBottom style={{ textAlign: 'center' }}>
+            Twoje elementy
           </Typography>
           {loading ? (
             <div className={classes.loadingWrapper}>
               <CircularProgress />
             </div>
           ) : (
-            renderItems('Elementy stroju', elementStroje)
+            renderItems('Elements', elementStroje)
           )}
-          <Typography variant="h6" style={{ marginTop: 30, marginBottom: 15 }}>
-            Stroje
+
+          <Typography
+            variant="h6"
+            gutterBottom
+            style={{ marginTop: 20, textAlign: 'center' }}
+          >
+            Twoje stroje
           </Typography>
           {loading ? (
             <div className={classes.loadingWrapper}>
               <CircularProgress />
             </div>
           ) : (
-            renderItems('Stroje', stroje)
+            renderItems('Outfits', stroje)
           )}
         </div>
       </div>
     </div>
   );
+
 };
 
 export default AddPage;

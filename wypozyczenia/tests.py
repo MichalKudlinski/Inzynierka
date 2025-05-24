@@ -16,7 +16,7 @@ def create_user(email='test@example.com', password='password123'):
 def create_costume(name='Test Stroj', user=None):
     if user is None:
         user = create_user(email='another@example.com')
-    return Costume.objects.create(name=name, gender='M', user=user)
+    return Costume.objects.create(name=name, gender='male', user=user)
 
 def create_element(name='Element 1', user=None):
     if user is None:

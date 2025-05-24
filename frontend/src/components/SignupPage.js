@@ -2,10 +2,13 @@ import {
   Button,
   Checkbox,
   FormControlLabel,
+  IconButton,
+  InputAdornment,
   Snackbar,
   TextField,
   Typography,
 } from "@material-ui/core";
+import { Visibility, VisibilityOff } from "@material-ui/icons";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -18,16 +21,17 @@ export default function SignUpPage() {
   const [csrfToken, setCsrfToken] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState(false);
-
-  // New state to track field-specific errors
+  const [showPassword, setShowPassword] = useState(false); // 👈 New state
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState({
     Nazwa: "",
     email: "",
     password: "",
+    confirmPassword: "",
     phone: "",
   });
 
-  const navigate = useNavigate(); // Hook for navigation
+  const navigate = useNavigate();
 
   useEffect(() => {
     const getCookie = (name) => {
@@ -52,25 +56,22 @@ export default function SignUpPage() {
     const { name, value } = event.target;
     if (name === "email") setEmail(value);
     if (name === "password") setPassword(value);
+    if (name === "confirmPassword") setConfirmPassword(value);
     if (name === "Nazwa") setNazwa(value);
     if (name === "phone") setPhone(value);
 
-    // Clear the field-specific error on input change
     setFieldErrors((prev) => ({ ...prev, [name]: "" }));
-    // Also clear general error
     setErrorMessage("");
   };
 
   const handleCheckboxChange = (event) => {
     setIsRenter(event.target.checked);
-    // Clear phone errors if toggling off
     if (!event.target.checked) {
       setFieldErrors((prev) => ({ ...prev, phone: "" }));
       setPhone("");
     }
   };
 
-  // Validate inputs individually and set errors accordingly
   const validateInputs = () => {
     let isValid = true;
     const newFieldErrors = {
@@ -85,13 +86,11 @@ export default function SignUpPage() {
       isValid = false;
     }
 
-    // Basic email regex
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newFieldErrors.email = "Nieprawidłowy adres e-mail.";
       isValid = false;
     }
 
-    // Password min 8 chars, at least one uppercase, one lowercase and one number
     if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(password)) {
       newFieldErrors.password =
         "Hasło min. 8 znaków, 1 wielka litera, 1 mała litera, 1 cyfra.";
@@ -104,7 +103,10 @@ export default function SignUpPage() {
         isValid = false;
       }
     }
-
+    if (!confirmPassword || confirmPassword !== password) {
+      newFieldErrors.confirmPassword = "Hasła muszą być takie same.";
+      isValid = false;
+    }
     setFieldErrors(newFieldErrors);
     return isValid;
   };
@@ -137,7 +139,6 @@ export default function SignUpPage() {
               const apiFieldErrors = {};
               let combinedMsg = "";
 
-
               const translations = {
                 "user with this email already exists.": "Użytkownik z tym adresem email już istnieje.",
                 "user with this name already exists.": "Nazwa jest już zajęta.",
@@ -145,7 +146,6 @@ export default function SignUpPage() {
 
               Object.entries(data).forEach(([key, val]) => {
                 if (Array.isArray(val)) {
-
                   const translatedMessages = val.map(
                     (msg) => translations[msg.toLowerCase()] || msg
                   );
@@ -188,33 +188,25 @@ export default function SignUpPage() {
     setSuccessMessage(false);
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
+
   return (
     <div
       style={{
         display: "grid",
-        gridTemplateAreas: ` 'image-left form image-right' 'image-left form image-right' `,
+        gridTemplateAreas: `'image-left form image-right'`,
         gridTemplateColumns: "1fr 2fr 1fr",
         height: "100vh",
         gap: "20px",
         padding: "10px",
         backgroundColor: "#fbeec1",
-        backgroundSize: "cover",
         fontFamily: "'Lobster', cursive",
       }}
     >
-      <div
-        style={{
-          gridArea: "image-left",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <img
-          src="/media\uploads\images\lowiczanka.webp"
-          alt="Postać ludowa"
-          style={{ maxWidth: "100%", maxHeight: "100%" }}
-        />
+      <div style={{ gridArea: "image-left", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <img src="/media/uploads/images/lowiczanka.webp" alt="Postać ludowa" style={{ maxWidth: "100%", maxHeight: "100%" }} />
       </div>
 
       <div
@@ -230,19 +222,11 @@ export default function SignUpPage() {
           boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.3)",
         }}
       >
-        <Typography
-          component="h4"
-          variant="h4"
-          style={{ marginBottom: "30px", color: "#b71c1c" }}
-        >
+        <Typography component="h4" variant="h4" style={{ marginBottom: "30px", color: "#b71c1c" }}>
           Rejestracja
         </Typography>
         {errorMessage && (
-          <Typography
-            color="error"
-            variant="body1"
-            style={{ marginBottom: "20px" }}
-          >
+          <Typography color="error" variant="body1" style={{ marginBottom: "20px" }}>
             {errorMessage}
           </Typography>
         )}
@@ -272,30 +256,40 @@ export default function SignUpPage() {
           label="Hasło"
           variant="outlined"
           fullWidth
-          type="password"
+          type={showPassword ? "text" : "password"} // 👈 Toggle type
           name="password"
           value={password}
           onChange={handleInputChange}
           style={{ marginBottom: "20px" }}
           error={Boolean(fieldErrors.password)}
-          helperText={
-            fieldErrors.password ||
-            "Hasło min. 8 znaków, 1 wielka litera, 1 mała litera, 1 cyfra."
-          }
+          helperText={fieldErrors.password || "Hasło min. 8 znaków, 1 wielka litera, 1 mała litera, 1 cyfra."}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton onClick={togglePasswordVisibility} edge="end">
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+        <TextField
+          label="Potwierdź Hasło"
+          variant="outlined"
+          fullWidth
+          type={showPassword ? "text" : "password"}
+          name="confirmPassword"
+          value={confirmPassword}
+          onChange={handleInputChange}
+          style={{ marginBottom: "20px" }}
+          error={Boolean(fieldErrors.confirmPassword)}
+          helperText={fieldErrors.confirmPassword}
         />
         <FormControlLabel
-          control={
-            <Checkbox
-              checked={isRenter}
-              onChange={handleCheckboxChange}
-              name="isRenter"
-              color="primary"
-            />
-          }
+          control={<Checkbox checked={isRenter} onChange={handleCheckboxChange} name="isRenter" color="primary" />}
           label="Chcę zostać wynajmującym"
           style={{ marginBottom: "20px" }}
         />
-
         {isRenter && (
           <TextField
             label="Numer telefonu (9 cyfr)"
@@ -310,15 +304,9 @@ export default function SignUpPage() {
             helperText={fieldErrors.phone}
           />
         )}
-
         <Button
           variant="contained"
-          style={{
-            backgroundColor: "#b71c1c",
-            color: "white",
-            fontWeight: "bold",
-            padding: "15px",
-          }}
+          style={{ backgroundColor: "#b71c1c", color: "white", fontWeight: "bold", padding: "15px" }}
           fullWidth
           onClick={handleSignUpButtonPressed}
         >
@@ -345,26 +333,10 @@ export default function SignUpPage() {
         </Button>
       </div>
 
-      <div
-        style={{
-          gridArea: "image-right",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <img
-          src="\media\uploads\images\lowicz.webp"
-          alt="Postać ludowa"
-          style={{ maxWidth: "100%", maxHeight: "100%" }}
-        />
+      <div style={{ gridArea: "image-right", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <img src="/media/uploads/images/lowicz.webp" alt="Postać ludowa" style={{ maxWidth: "100%", maxHeight: "100%" }} />
       </div>
-      <Snackbar
-        open={successMessage}
-        autoHideDuration={1000}
-        onClose={handleCloseSnackbar}
-        message="Użytkownik zarejestrowany pomyślnie!"
-      />
+      <Snackbar open={successMessage} autoHideDuration={1000} onClose={handleCloseSnackbar} message="Użytkownik zarejestrowany pomyślnie!" />
     </div>
   );
 }

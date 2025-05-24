@@ -7,8 +7,8 @@ urlpatterns = [
     path("signup", index),
     path("login", index),
     path("main", index),
-    path("reservations", index),
+    path("rentals", index),
     path("details", index),
     path("details/<str:type>/<int:id>", index),
-    path("dodaj",index),
+    path("add",index),
 ]

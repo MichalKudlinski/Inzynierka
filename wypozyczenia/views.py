@@ -75,7 +75,6 @@ def send_reminders(request):
     if not user.is_authenticated:
         return JsonResponse({"detail": "Brak autoryzacji."}, status=401)
 
-
     seven_days_ago = timezone.now() - timedelta(days=7)
     if ControlMessage.objects.filter(
         user=user,
@@ -88,10 +87,8 @@ def send_reminders(request):
 
     today = timezone.now()
 
-
     user_costumes = Costume.objects.filter(user=user)
     user_elements = Element.objects.filter(user=user)
-
 
     stroj_qs = Rental.objects.filter(
         return_date__gte=today + timedelta(days=2),
@@ -116,19 +113,22 @@ def send_reminders(request):
             f"• Data zwrotu: {r.return_date:%d-%m-%Y}\n\n"
             "Pozdrawiamy,\nHeritageWear.pl"
         )
-        send_mail(
-            subject,
-            message,
-            "heritage.waer.kontakt@gmail.com",
-            ["michal.kudlinski@gmail.com"],
-            fail_silently=False,
+        try:
+            send_mail(
+                subject,
+                message,
+                "heritage.waer.kontakt@gmail.com",
+                ["michal.kudlinski@gmail.com"],
+                fail_silently=False,
+            )
+            sent += 1
+        except Exception as e:
+            print(f"Failed to send reminder for rental ID={r.id}: {e}")
+
+    if sent > 0:
+        ControlMessage.objects.create(
+            user=user,
+            name="send_reminders"
         )
-        sent += 1
-
-
-    ControlMessage.objects.create(
-        user=user,
-        name="send_reminders"
-    )
 
     return JsonResponse({"sent": sent})
