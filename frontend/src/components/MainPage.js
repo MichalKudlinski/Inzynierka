@@ -1,4 +1,13 @@
-import { Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@material-ui/core";
+import {
+  Button,
+  Card,
+  CardContent,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Typography,
+} from "@material-ui/core";
 import React, { Component } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -68,18 +77,21 @@ class MainPage extends Component {
     }
 
     // Check if item is currently rented or reserved
-    const hasCurrentOrFutureRental = [...rentals, ...reservations].some((rental) => {
-      if (itemToDelete.type === "costume") {
-        return rental.costume === itemToDelete.id;
-      } else if (itemToDelete.type === "element") {
-        return rental.element === itemToDelete.id;
+    const hasCurrentOrFutureRental = [...rentals, ...reservations].some(
+      (rental) => {
+        if (itemToDelete.type === "costume") {
+          return rental.costume === itemToDelete.id;
+        } else if (itemToDelete.type === "element") {
+          return rental.element === itemToDelete.id;
+        }
+        return false;
       }
-      return false;
-    });
+    );
 
     if (hasCurrentOrFutureRental) {
       this.setState({
-        errorMessage: "Nie można usunąć elementu, ponieważ jest aktualnie wypożyczony lub zarezerwowany.",
+        errorMessage:
+          "Nie można usunąć elementu, ponieważ jest aktualnie wypożyczony lub zarezerwowany.",
         deleteConfirmationOpen: false,
         itemToDelete: null,
       });
@@ -117,12 +129,20 @@ class MainPage extends Component {
         };
 
         if (itemToDelete.type === "costume") {
-          updatedState.allOwnedCostumes = prevState.allOwnedCostumes.filter((s) => s.id !== itemToDelete.id);
+          updatedState.allOwnedCostumes = prevState.allOwnedCostumes.filter(
+            (s) => s.id !== itemToDelete.id
+          );
         } else if (itemToDelete.type === "element") {
-          updatedState.allOwnedElements = prevState.allOwnedElements.filter((e) => e.id !== itemToDelete.id);
+          updatedState.allOwnedElements = prevState.allOwnedElements.filter(
+            (e) => e.id !== itemToDelete.id
+          );
         } else {
-          updatedState.rentals = prevState.rentals.filter((r) => r.id !== itemToDelete.id);
-          updatedState.reservations = prevState.reservations.filter((r) => r.id !== itemToDelete.id);
+          updatedState.rentals = prevState.rentals.filter(
+            (r) => r.id !== itemToDelete.id
+          );
+          updatedState.reservations = prevState.reservations.filter(
+            (r) => r.id !== itemToDelete.id
+          );
         }
 
         return updatedState;
@@ -133,7 +153,11 @@ class MainPage extends Component {
   }
 
   openExtendDialog = (item) => {
-    this.setState({ extendDialogOpen: true, rentalToExtend: item, daysToExtend: 1 });
+    this.setState({
+      extendDialogOpen: true,
+      rentalToExtend: item,
+      daysToExtend: 1,
+    });
   };
   openDeleteConfirmation(item) {
     this.setState({
@@ -186,7 +210,7 @@ class MainPage extends Component {
       console.log("send‑reminders response:", json);
       alert(`Wysłano przypomnienia dla ${json.sent} wypożyczeń.`);
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
   }
 
@@ -204,17 +228,12 @@ class MainPage extends Component {
 
       this.setState({ costumes, elements });
 
-      const rentalsRes = await fetch(
-        "/api/rentals/list",
-        { headers }
-      );
+      const rentalsRes = await fetch("/api/rentals/list", { headers });
       const allRentals = await rentalsRes.json();
 
       const filtered = allRentals.filter((rental) => {
         const costumeObj = costumes.find((s) => s.id === rental.costume);
-        const elementsObj = elements.find(
-          (e) => e.id === rental.element
-        );
+        const elementsObj = elements.find((e) => e.id === rental.element);
         return (
           (costumeObj?.user === this.state.user.id ||
             elementsObj?.user === this.state.user.id) &&
@@ -235,9 +254,7 @@ class MainPage extends Component {
         rentals: rental.rentals,
         reservations: rental.reservations,
         allOwnedCostumes: costumes.filter((s) => s.user === this.state.user.id),
-        allOwnedElements: elements.filter(
-          (e) => e.user === this.state.user.id
-        ),
+        allOwnedElements: elements.filter((e) => e.user === this.state.user.id),
       });
     } catch {
       this.setState({ errorMessage: "Błąd pobierania danych wynajmującego." });
@@ -251,12 +268,12 @@ class MainPage extends Component {
         fetch("/api/costumes/element/list", { headers }),
       ]);
 
-      const [costumes, elements] = await Promise.all([costumeRes.json(), elementRes.json()]);
+      const [costumes, elements] = await Promise.all([
+        costumeRes.json(),
+        elementRes.json(),
+      ]);
 
-      const rentalsRes = await fetch(
-        "/api/rentals/list",
-        { headers }
-      );
+      const rentalsRes = await fetch("/api/rentals/list", { headers });
       const rentals = await rentalsRes.json();
 
       const filteredRentals = rentals.filter((rental) => {
@@ -270,8 +287,7 @@ class MainPage extends Component {
         const elementUser =
           typeof rental.element === "object"
             ? rental.element?.user
-            : elements.find((e) => e.id === rental.element)
-              ?.user;
+            : elements.find((e) => e.id === rental.element)?.user;
 
         return (
           (isDirectUser || costumeUser === userId || elementUser === userId) &&
@@ -340,12 +356,12 @@ class MainPage extends Component {
         }
       );
 
-      if (!response.ok) throw new Error("Błąd przy wysyłaniu danych do serwera");
+      if (!response.ok)
+        throw new Error("Błąd przy wysyłaniu danych do serwera");
 
       await response.json();
 
       alert("Wypożyczenie zostało przedłużone.");
-
 
       window.location.reload();
     } catch (error) {
@@ -378,7 +394,9 @@ class MainPage extends Component {
       this.componentDidMount(); // Re-fetch data
     } catch (error) {
       console.error(error);
-      this.setState({ errorMessage: "Błąd przy zmianie rezerwacji na wypożyczenie." });
+      this.setState({
+        errorMessage: "Błąd przy zmianie rezerwacji na wypożyczenie.",
+      });
     }
   };
   // Helper function to check if the rental is current or future
@@ -427,7 +445,9 @@ class MainPage extends Component {
 
     return items.length === 0 ? (
       <Typography variant="body1" style={{ textAlign: "center" }}>
-        Brak {title.toLowerCase()}
+        {title === "Rezerwacje"
+          ? "Brak rezerwacji"
+          : `Brak ${title.toLowerCase()}`}
       </Typography>
     ) : (
       items.map((item) => {
@@ -435,12 +455,14 @@ class MainPage extends Component {
           if (item.costume) {
             return typeof item.costume === "object"
               ? item.costume.name
-              : costumes.find((s) => s.id === item.costume)?.name || "Strój nieznany";
+              : costumes.find((s) => s.id === item.costume)?.name ||
+                  "Strój nieznany";
           }
           if (item.element) {
             return typeof item.element === "object"
               ? item.element.name
-              : elements.find((e) => e.id === item.element)?.name || "Element stroju nieznany";
+              : elements.find((e) => e.id === item.element)?.name ||
+                  "Element stroju nieznany";
           }
           return "Nieznany przedmiot";
         })();
@@ -449,15 +471,12 @@ class MainPage extends Component {
         const zwrotDate = new Date(item.return_date);
         const now = new Date();
 
-
-
-        const showTimer = !this.state.user?.is_renter &&
+        const showTimer =
+          !this.state.user?.is_renter &&
           item.rented &&
           item.return_date &&
           wypozyczonoDate <= now &&
           zwrotDate > now;
-
-
 
         const timeLeft = showTimer ? this.calculateTimeLeft(zwrotDate) : null;
 
@@ -486,7 +505,10 @@ class MainPage extends Component {
                 Zwrot: {formatDate(item.return_date)}
               </Typography>
               {showTimer && (
-                <Typography variant="body2" style={{ color: "green", marginTop: "5px" }}>
+                <Typography
+                  variant="body2"
+                  style={{ color: "green", marginTop: "5px" }}
+                >
                   Pozostało: {timeLeft}
                 </Typography>
               )}
@@ -522,7 +544,6 @@ class MainPage extends Component {
         );
       })
     );
-
   }
 
   renderOwnedItems(title, items) {
@@ -576,7 +597,11 @@ class MainPage extends Component {
               {!isApproved && (
                 <Typography
                   variant="body2"
-                  style={{ color: "#999", fontStyle: "italic", marginBottom: "10px" }}
+                  style={{
+                    color: "#999",
+                    fontStyle: "italic",
+                    marginBottom: "10px",
+                  }}
                 >
                   Oczekiwanie na zatwierdzenie
                 </Typography>
@@ -599,7 +624,10 @@ class MainPage extends Component {
                 color="secondary"
                 style={{ marginTop: "10px" }}
                 onClick={() =>
-                  this.openDeleteConfirmation({ ...item, type: isElement ? "element" : "costume" })
+                  this.openDeleteConfirmation({
+                    ...item,
+                    type: isElement ? "element" : "costume",
+                  })
                 }
                 disabled={!isApproved}
               >
@@ -611,7 +639,6 @@ class MainPage extends Component {
       })
     );
   }
-
 
   render() {
     const {
@@ -625,7 +652,7 @@ class MainPage extends Component {
       itemToDelete,
       extendDialogOpen,
       extendDays,
-      rentalToExtend
+      rentalToExtend,
     } = this.state;
 
     const { navigate } = this.props;
@@ -642,16 +669,44 @@ class MainPage extends Component {
     };
 
     return (
-      <div style={{ height: "100vh", overflowY: "auto", padding: "10px", backgroundColor: "#ffebcc" }}>
+      <div
+        style={{
+          height: "100vh",
+          overflowY: "auto",
+          padding: "10px",
+          backgroundColor: "#ffebcc",
+        }}
+      >
         {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px", backgroundColor: "#a52a2a", borderRadius: "12px", color: "#fff", border: "3px solid #d4a373" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "20px",
+            backgroundColor: "#a52a2a",
+            borderRadius: "12px",
+            color: "#fff",
+            border: "3px solid #d4a373",
+          }}
+        >
           <Typography variant="h4" style={{ flexGrow: 1, textAlign: "center" }}>
-            Witaj na stronie głównej użytkownika!
+            Witamy cię na stronie głównej!
           </Typography>
         </div>
 
         {/* User info */}
-        <div style={{ border: "3px solid #d4a373", borderRadius: "12px", backgroundColor: "rgba(0, 0, 0, 0.6)", color: "#fff", padding: "20px", textAlign: "center", marginTop: "20px" }}>
+        <div
+          style={{
+            border: "3px solid #d4a373",
+            borderRadius: "12px",
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            color: "#fff",
+            padding: "20px",
+            textAlign: "center",
+            marginTop: "20px",
+          }}
+        >
           {errorMessage ? (
             <Typography color="error">{errorMessage}</Typography>
           ) : user ? (
@@ -664,24 +719,61 @@ class MainPage extends Component {
           <Button
             variant="contained"
             onClick={this.handleLogout}
-            style={{ backgroundColor: "#d9534f", color: "#fff", marginTop: "20px", borderRadius: "12px" }}
+            style={{
+              backgroundColor: "#d9534f",
+              color: "#fff",
+              marginTop: "20px",
+              borderRadius: "12px",
+            }}
           >
             Wyloguj się
           </Button>
-
         </div>
 
         {/* Rentals and Reservations */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px", marginTop: "20px" }}>
-          <div style={{ border: "3px solid #d4a373", borderRadius: "12px", backgroundColor: "rgba(0, 0, 0, 0.6)", color: "#fff", padding: "20px" }}>
-            <Typography variant="h5" style={{ textAlign: "center", marginBottom: "10px" }}>
-              {user?.is_renter ? "Wypożyczenia Twoich przedmiotów" : "Twoje wypożyczenia"}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gap: "20px",
+            marginTop: "20px",
+          }}
+        >
+          <div
+            style={{
+              border: "3px solid #d4a373",
+              borderRadius: "12px",
+              backgroundColor: "rgba(0, 0, 0, 0.6)",
+              color: "#fff",
+              padding: "20px",
+            }}
+          >
+            <Typography
+              variant="h5"
+              style={{ textAlign: "center", marginBottom: "10px" }}
+            >
+              {user?.is_renter
+                ? "Wypożyczenia Twoich przedmiotów"
+                : "Twoje wypożyczenia"}
             </Typography>
             {this.renderList("Wypożyczenia", rentals, costumes, elements)}
           </div>
-          <div style={{ border: "3px solid #d4a373", borderRadius: "12px", backgroundColor: "rgba(0, 0, 0, 0.6)", color: "#fff", padding: "20px" }}>
-            <Typography variant="h5" style={{ textAlign: "center", marginBottom: "10px" }}>
-              {user?.is_renter ? "Rezerwacje Twoich przedmiotów" : "Twoje rezerwacje"}
+          <div
+            style={{
+              border: "3px solid #d4a373",
+              borderRadius: "12px",
+              backgroundColor: "rgba(0, 0, 0, 0.6)",
+              color: "#fff",
+              padding: "20px",
+            }}
+          >
+            <Typography
+              variant="h5"
+              style={{ textAlign: "center", marginBottom: "10px" }}
+            >
+              {user?.is_renter
+                ? "Rezerwacje Twoich przedmiotów"
+                : "Twoje rezerwacje"}
             </Typography>
             {this.renderList("Rezerwacje", reservations, costumes, elements)}
           </div>
@@ -694,19 +786,37 @@ class MainPage extends Component {
               Twoje stroje
             </Typography>
             {this.renderOwnedItems("stroje", this.state.allOwnedCostumes)}
-            <Typography variant="h5" style={{ textAlign: "center", marginTop: "20px" }}>
+            <Typography
+              variant="h5"
+              style={{ textAlign: "center", marginTop: "20px" }}
+            >
               Twoje elementy stroju
             </Typography>
-            {this.renderOwnedItems("elementy stroju", this.state.allOwnedElements)}
+            {this.renderOwnedItems(
+              "elementy stroju",
+              this.state.allOwnedElements
+            )}
           </div>
         )}
 
-
         {!user?.is_renter && (
-          <div style={{ display: "flex", justifyContent: "center", marginTop: "40px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginTop: "40px",
+            }}
+          >
             <Button
               variant="contained"
-              style={{ backgroundColor: "#337ab7", color: "#fff", fontWeight: "bold", borderRadius: "12px", padding: "14px 24px", fontSize: "16px" }}
+              style={{
+                backgroundColor: "#337ab7",
+                color: "#fff",
+                fontWeight: "bold",
+                borderRadius: "12px",
+                padding: "14px 24px",
+                fontSize: "16px",
+              }}
               onClick={() => navigate("/rentals")}
             >
               Przeglądaj dostępne stroje
@@ -725,25 +835,35 @@ class MainPage extends Component {
         )}
 
         {/* Delete confirmation dialog */}
-        <Dialog open={deleteConfirmationOpen} onClose={() => this.closeDeleteConfirmation()}>
+        <Dialog
+          open={deleteConfirmationOpen}
+          onClose={() => this.closeDeleteConfirmation()}
+        >
           <DialogTitle>Potwierdzenie usunięcia</DialogTitle>
           <DialogContent>
-            <Typography>
-              Czy na pewno chcesz usunąć ten przedmiot?
-            </Typography>
+            <Typography>Czy na pewno chcesz usunąć ten przedmiot?</Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => this.closeDeleteConfirmation()} color="primary">
+            <Button
+              onClick={() => this.closeDeleteConfirmation()}
+              color="primary"
+            >
               Anuluj
             </Button>
-            <Button onClick={() => this.deleteItemConfirmed()} color="secondary">
+            <Button
+              onClick={() => this.deleteItemConfirmed()}
+              color="secondary"
+            >
               Tak
             </Button>
           </DialogActions>
         </Dialog>
 
         {/* Wydłuż dialog */}
-        <Dialog open={extendDialogOpen} onClose={() => this.setState({ extendDialogOpen: false })}>
+        <Dialog
+          open={extendDialogOpen}
+          onClose={() => this.setState({ extendDialogOpen: false })}
+        >
           <DialogTitle>Wydłuż wypożyczenie</DialogTitle>
           <DialogContent>
             <Typography>Na ile dni chcesz wydłużyć?</Typography>
@@ -751,12 +871,17 @@ class MainPage extends Component {
               type="number"
               min="1"
               value={extendDays}
-              onChange={(e) => this.setState({ extendDays: parseInt(e.target.value) || "" })}
+              onChange={(e) =>
+                this.setState({ extendDays: parseInt(e.target.value) || "" })
+              }
               style={{ width: "100%", marginTop: "10px", padding: "8px" }}
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => this.setState({ extendDialogOpen: false })} color="primary">
+            <Button
+              onClick={() => this.setState({ extendDialogOpen: false })}
+              color="primary"
+            >
               Anuluj
             </Button>
             <Button onClick={() => this.extendRental()} color="secondary">
@@ -775,7 +900,10 @@ class MainPage extends Component {
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={this.closeConfirmReservationDialog} color="default">
+            <Button
+              onClick={this.closeConfirmReservationDialog}
+              color="default"
+            >
               Anuluj
             </Button>
             <Button onClick={this.confirmReservation} color="primary">
@@ -792,7 +920,10 @@ class MainPage extends Component {
             <Typography>{this.state.errorMessage}</Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => this.setState({ errorMessage: "" })} color="primary">
+            <Button
+              onClick={() => this.setState({ errorMessage: "" })}
+              color="primary"
+            >
               Zamknij
             </Button>
           </DialogActions>
@@ -800,7 +931,6 @@ class MainPage extends Component {
       </div>
     );
   }
-
 }
 
 export default function MainPageWithNavigate(props) {

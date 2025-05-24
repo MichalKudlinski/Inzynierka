@@ -140,7 +140,8 @@ export default function SignUpPage() {
               let combinedMsg = "";
 
               const translations = {
-                "user with this email already exists.": "Użytkownik z tym adresem email już istnieje.",
+                "user with this email already exists.":
+                  "Użytkownik z tym adresem email już istnieje.",
                 "user with this name already exists.": "Nazwa jest już zajęta.",
               };
 
@@ -205,8 +206,19 @@ export default function SignUpPage() {
         fontFamily: "'Lobster', cursive",
       }}
     >
-      <div style={{ gridArea: "image-left", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <img src="/media/uploads/images/lowiczanka.webp" alt="Postać ludowa" style={{ maxWidth: "100%", maxHeight: "100%" }} />
+      <div
+        style={{
+          gridArea: "image-left",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <img
+          src="/media/uploads/images/lowiczanka.webp"
+          alt="Postać ludowa"
+          style={{ maxWidth: "100%", maxHeight: "100%" }}
+        />
       </div>
 
       <div
@@ -222,11 +234,19 @@ export default function SignUpPage() {
           boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.3)",
         }}
       >
-        <Typography component="h4" variant="h4" style={{ marginBottom: "30px", color: "#b71c1c" }}>
+        <Typography
+          component="h4"
+          variant="h4"
+          style={{ marginBottom: "30px", color: "#b71c1c" }}
+        >
           Rejestracja
         </Typography>
         {errorMessage && (
-          <Typography color="error" variant="body1" style={{ marginBottom: "20px" }}>
+          <Typography
+            color="error"
+            variant="body1"
+            style={{ marginBottom: "20px" }}
+          >
             {errorMessage}
           </Typography>
         )}
@@ -262,7 +282,10 @@ export default function SignUpPage() {
           onChange={handleInputChange}
           style={{ marginBottom: "20px" }}
           error={Boolean(fieldErrors.password)}
-          helperText={fieldErrors.password || "Hasło min. 8 znaków, 1 wielka litera, 1 mała litera, 1 cyfra."}
+          helperText={
+            fieldErrors.password ||
+            "Hasło min. 8 znaków, 1 wielka litera, 1 mała litera, 1 cyfra."
+          }
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
@@ -286,7 +309,14 @@ export default function SignUpPage() {
           helperText={fieldErrors.confirmPassword}
         />
         <FormControlLabel
-          control={<Checkbox checked={isRenter} onChange={handleCheckboxChange} name="isRenter" color="primary" />}
+          control={
+            <Checkbox
+              checked={isRenter}
+              onChange={handleCheckboxChange}
+              name="isRenter"
+              color="primary"
+            />
+          }
           label="Chcę zostać wynajmującym"
           style={{ marginBottom: "20px" }}
         />
@@ -306,7 +336,12 @@ export default function SignUpPage() {
         )}
         <Button
           variant="contained"
-          style={{ backgroundColor: "#b71c1c", color: "white", fontWeight: "bold", padding: "15px" }}
+          style={{
+            backgroundColor: "#b71c1c",
+            color: "white",
+            fontWeight: "bold",
+            padding: "15px",
+          }}
           fullWidth
           onClick={handleSignUpButtonPressed}
         >
@@ -333,10 +368,26 @@ export default function SignUpPage() {
         </Button>
       </div>
 
-      <div style={{ gridArea: "image-right", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <img src="/media/uploads/images/lowicz.webp" alt="Postać ludowa" style={{ maxWidth: "100%", maxHeight: "100%" }} />
+      <div
+        style={{
+          gridArea: "image-right",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <img
+          src="/media/uploads/images/lowicz.webp"
+          alt="Postać ludowa"
+          style={{ maxWidth: "100%", maxHeight: "100%" }}
+        />
       </div>
-      <Snackbar open={successMessage} autoHideDuration={1000} onClose={handleCloseSnackbar} message="Użytkownik zarejestrowany pomyślnie!" />
+      <Snackbar
+        open={successMessage}
+        autoHideDuration={1000}
+        onClose={handleCloseSnackbar}
+        message="Użytkownik zarejestrowany pomyślnie!"
+      />
     </div>
   );
 }

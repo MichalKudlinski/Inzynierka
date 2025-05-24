@@ -8,31 +8,31 @@ import HomePage from "./HomePage";
 import LoginPage from "./LoginPage";
 import MainPageWithNavigate from "./MainPage";
 import ReservationPage from "./ReservationPage";
-import SignUpPage from "./SignUpPage";
+import SignUpPage from "./SignupPage";
 
 export default class App extends Component {
-    render() {
-        return (
-            <Router>
-                <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/signup" element={<SignUpPage />} />
-                    <Route path="/main" element={<MainPageWithNavigate />} />
-                    <Route path="/rentals" element={<ReservationPage />} />
-                    <Route path="/details/:type/:id" element={<DetailPage />} />
-                    <Route path="/add" element={<AddPage />} />
-                </Routes>
-            </Router>
-        );
-    }
+  render() {
+    return (
+      <Router>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/main" element={<MainPageWithNavigate />} />
+          <Route path="/rentals" element={<ReservationPage />} />
+          <Route path="/details/:type/:id" element={<DetailPage />} />
+          <Route path="/add" element={<AddPage />} />
+        </Routes>
+      </Router>
+    );
+  }
 }
 
 const appDiv = document.getElementById("App");
 
 if (appDiv) {
-    const root = ReactDOM.createRoot(appDiv);
-    root.render(<App />);
+  const root = ReactDOM.createRoot(appDiv);
+  root.render(<App />);
 } else {
-    console.error('Target container "#App" not found in the DOM.');
+  console.error('Target container "#App" not found in the DOM.');
 }

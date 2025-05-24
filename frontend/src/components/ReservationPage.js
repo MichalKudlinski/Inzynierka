@@ -94,8 +94,12 @@ class ReservationPage extends Component {
           ]);
 
         // FILTER costumes and elements by confirmed === true
-        const filteredCostumes = costumesData.filter((c) => c.confirmed === true);
-        const filteredElements = elementsData.filter((e) => e.confirmed === true);
+        const filteredCostumes = costumesData.filter(
+          (c) => c.confirmed === true
+        );
+        const filteredElements = elementsData.filter(
+          (e) => e.confirmed === true
+        );
 
         const now = new Date();
         const upcomingReservations = reservationsData.filter(
@@ -129,7 +133,7 @@ class ReservationPage extends Component {
   handleReserve = (item, isElement) => {
     this.setState({
       showDialog: true,
-      dialogMessage: `Wybierz daty wypożyczenia i zwrotu dla ${item.name}.`,
+      dialogMessage: `Wybierz przedział rezerwacji ${item.name}.`,
       dialogType: "reserve",
       itemToProcess: item,
       isElement,
@@ -141,7 +145,7 @@ class ReservationPage extends Component {
   handleRental = (item, isElement) => {
     this.setState({
       showDialog: true,
-      dialogMessage: `Wybierz daty wypożyczenia i zwrotu dla ${item.name}.`,
+      dialogMessage: `Wybierz date wypożyczenia i zwrotu ${item.name}.`,
       dialogType: "rental",
       itemToProcess: item,
       isElement,
@@ -253,7 +257,9 @@ class ReservationPage extends Component {
 
       this.setState({
         infoDialogOpen: true,
-        infoDialogMessage: `${dialogType === "reserve" ? "Rezerwacja" : "Wypożyczenie"} utworzone pomyślnie!`,
+        infoDialogMessage: `${
+          dialogType === "reserve" ? "Rezerwacja" : "Wypożyczenie"
+        } utworzone pomyślnie!`,
         showDialog: false,
       });
 
@@ -271,7 +277,6 @@ class ReservationPage extends Component {
       console.log("Updated reservations:", reservationsData);
 
       this.setState({ reservations: reservationsData });
-
     } catch (error) {
       console.error("Rental/reservation action failed:", error);
       this.setState({
@@ -281,8 +286,6 @@ class ReservationPage extends Component {
       });
     }
   };
-
-
 
   cancelAction = () => {
     this.setState({ showDialog: false });
@@ -336,15 +339,15 @@ class ReservationPage extends Component {
 
     // Mapping for display labels (optional if you want nicer names)
     const elementTypeMapping = {
-      headwear: "Headwear",
-      shirt: "Shirt",
-      trousers: "Trousers",
-      vest: "Vest",
-      shoes: "Shoes",
-      accessories: "Accessories",
-      jewelry: "Jewelry",
-      petticoat: "Petticoat",
-      dress: "Dress",
+      headwear: "Nakrycie głowy",
+      shirt: "Koszula",
+      trousers: "Spodnie",
+      vest: "Kamizelka",
+      shoes: "Buty",
+      accessories: "Akcesoria",
+      jewelry: "Biżuteria",
+      petticoat: "Halka",
+      dress: "Sukienka",
     };
 
     // Collect element IDs used in costumes
@@ -360,12 +363,12 @@ class ReservationPage extends Component {
     const filteredItems = showFullCostume
       ? costumes
       : elements.filter((item) => {
-        const isInCostume = elementsInCostume.has(item.id);
-        const matchesType = selectedElementType
-          ? item.element_type === selectedElementType
-          : true;
-        return !isInCostume && matchesType;
-      });
+          const isInCostume = elementsInCostume.has(item.id);
+          const matchesType = selectedElementType
+            ? item.element_type === selectedElementType
+            : true;
+          return !isInCostume && matchesType;
+        });
 
     return (
       <div
@@ -389,7 +392,7 @@ class ReservationPage extends Component {
           }}
         >
           <Typography variant="h4" style={{ margin: 0 }}>
-            Available Traditional Costumes and Elements
+            Dostępne stroje ludowe i elementy strojów
           </Typography>
         </div>
 
@@ -404,7 +407,7 @@ class ReservationPage extends Component {
               border: "3px solid #d4a373",
             }}
           >
-            Back
+            Wróć
           </Button>
 
           <Button
@@ -417,7 +420,7 @@ class ReservationPage extends Component {
               border: "3px solid #d4a373",
             }}
           >
-            {showFullCostume ? "Show Elements" : "Show Costumes"}
+            {showFullCostume ? "Pokaż elementy" : "Pokaż stroje"}
           </Button>
 
           {!showFullCostume && (
@@ -464,7 +467,9 @@ class ReservationPage extends Component {
                   color: "#a52a2a",
                 }}
               >
-                No available {showFullCostume ? "costumes" : "elements"} to display.
+                Brak dostępnych{" "}
+                {showFullCostume ? "strojów" : "elementów stroju"} do
+                wyświetlenia.
               </Typography>
             ) : (
               filteredItems.map((item) => (
@@ -488,7 +493,7 @@ class ReservationPage extends Component {
                       }}
                       onClick={() => this.handleReserve(item, !showFullCostume)}
                     >
-                      Reserve
+                      Rezerwuj
                     </Button>
                     <Button
                       fullWidth
@@ -499,7 +504,7 @@ class ReservationPage extends Component {
                       }}
                       onClick={() => this.handleRental(item, !showFullCostume)}
                     >
-                      Rent
+                      Wypożycz
                     </Button>
                     <Button
                       fullWidth
@@ -508,12 +513,13 @@ class ReservationPage extends Component {
                       style={{ marginTop: "10px" }}
                       onClick={() =>
                         this.props.navigate(
-                          `/details/${showFullCostume ? "costume" : "element"}/${item.id
-                          }`
+                          `/details/${
+                            showFullCostume ? "costume" : "element"
+                          }/${item.id}`
                         )
                       }
                     >
-                      Details
+                      Szczegóły
                     </Button>
                     <Button
                       fullWidth
@@ -523,9 +529,11 @@ class ReservationPage extends Component {
                         borderColor: "#4caf50",
                         color: "#4caf50",
                       }}
-                      onClick={() => this.handleShowRentals(item, !showFullCostume)}
+                      onClick={() =>
+                        this.handleShowRentals(item, !showFullCostume)
+                      }
                     >
-                      Rentals
+                      Wypożyczenia
                     </Button>
                   </CardContent>
                 </Card>
@@ -536,22 +544,27 @@ class ReservationPage extends Component {
 
         {/* DIALOG: date picker */}
         <Dialog open={showDialog} onClose={this.cancelAction}>
-          <DialogTitle>Confirmation</DialogTitle>
+          <DialogTitle>
+            Przedział dni{" "}
+            {this.state.dialogType === "reserve"
+              ? "rezerwacji"
+              : "wypożyczenia"}{" "}
+          </DialogTitle>
           <DialogContent>
             <Typography variant="body1">{dialogMessage}</Typography>
             <TextField
               type="datetime-local"
-              label="Rental Date"
+              label="Data rozpoczęcia "
               fullWidth
               InputLabelProps={{ shrink: true }}
               value={
                 wypozyczonoDate
                   ? new Date(
-                    wypozyczonoDate.getTime() -
-                    wypozyczonoDate.getTimezoneOffset() * 60000
-                  )
-                    .toISOString()
-                    .slice(0, 16)
+                      wypozyczonoDate.getTime() -
+                        wypozyczonoDate.getTimezoneOffset() * 60000
+                    )
+                      .toISOString()
+                      .slice(0, 16)
                   : ""
               }
               onChange={(e) =>
@@ -562,43 +575,48 @@ class ReservationPage extends Component {
             <br />
             <TextField
               type="datetime-local"
-              label="Return Date"
+              label="Data zwrotu"
               fullWidth
               InputLabelProps={{ shrink: true }}
               value={
                 rentalDate
                   ? new Date(
-                    rentalDate.getTime() - rentalDate.getTimezoneOffset() * 60000
-                  )
-                    .toISOString()
-                    .slice(0, 16)
+                      rentalDate.getTime() -
+                        rentalDate.getTimezoneOffset() * 60000
+                    )
+                      .toISOString()
+                      .slice(0, 16)
                   : ""
               }
-              onChange={(e) => this.setState({ rentalDate: new Date(e.target.value) })}
+              onChange={(e) =>
+                this.setState({ rentalDate: new Date(e.target.value) })
+              }
             />
           </DialogContent>
           <DialogActions>
             <Button onClick={this.cancelAction} color="secondary">
-              Cancel
+              Anuluj
             </Button>
             <Button onClick={this.confirmAction} color="primary">
-              Confirm
+              Potwierdź
             </Button>
           </DialogActions>
         </Dialog>
 
         {/* DIALOG: existing rentals */}
         <Dialog open={rentalDialogOpen} onClose={this.handleCloseRentalDialog}>
-          <DialogTitle>Rental List</DialogTitle>
+          <DialogTitle>Lista wypożyczeń</DialogTitle>
           <DialogContent>
             {selectedRentals.length === 0 ? (
-              <Typography>No rentals found for this item/costume.</Typography>
+              <Typography>
+                Nie znaleziono wypożyczeń dla tego przedmiotu/kostiumu.
+              </Typography>
             ) : (
               selectedRentals.map((rental, i) => (
                 <div key={i} style={{ marginBottom: "10px" }}>
                   <Typography variant="body2">
-                    {rental.reservation ? "Reservation" : "Rental"} from:{" "}
-                    {new Date(rental.rented).toLocaleString()} to:{" "}
+                    {rental.reservation ? "Rezerwacja" : "Wypożyczenie"} od:{" "}
+                    {new Date(rental.rented).toLocaleString()} do:{" "}
                     {new Date(rental.return_date).toLocaleString()}
                   </Typography>
                 </div>
@@ -633,7 +651,6 @@ class ReservationPage extends Component {
       </div>
     );
   }
-
 }
 
 export default withNavigation(ReservationPage);
