@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class WiadomosciConfig(AppConfig):
+class StrojeConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'wiadomosci'
+    name = 'costumes'

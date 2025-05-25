@@ -11,19 +11,22 @@ from api.models import Costume, Element, Rental
 User = get_user_model()
 
 def create_user(email='test@example.com', password='password123'):
-    return User.objects.create_user(email=email, password=password, name='Test User')
+    """Tworzenie użytkownika"""
+    return User.objects.create_user(email=email, password=password, name='Test User', is_renter = True)
 
 def create_costume(name='Test Stroj', user=None):
+    """Tworzenie stroju"""
     if user is None:
         user = create_user(email='another@example.com')
     return Costume.objects.create(name=name, gender='male', user=user)
 
 def create_element(name='Element 1', user=None):
+    """Tworzenie elementu stroju"""
     if user is None:
         user = create_user(email='another@example.com')
     return Element.objects.create(name=name, user=user)
 
-class WypozyczenieApiTests(TestCase):
+class RentalApiTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
@@ -34,8 +37,8 @@ class WypozyczenieApiTests(TestCase):
         self.url_create = reverse('rental-create')
         self.url_list = reverse('rental-list')
 
-    def test_create_wypozyczenie_with_stroj(self):
-        """Test creating a wypozyczenie with a stroj"""
+    def test_create_rental_with_costume(self):
+        """Tworzenie wypożyczenia na podstawie prawidłowych danych ze strojem"""
         payload = {
             'costume': self.costume.id,
             'rented': datetime.now().isoformat(),
@@ -48,8 +51,8 @@ class WypozyczenieApiTests(TestCase):
         self.assertEqual(rental.user, self.user)
         self.assertEqual(rental.costume, self.costume)
 
-    def test_create_wypozyczenie_with_element_stroju(self):
-        """Test creating a wypozyczenie with an element_stroju"""
+    def test_create_rental_with_element(self):
+        """Tworzenie wypożyczenia na podstawie prawidłowych danych z elmentem"""
         payload = {
             'element': self.element.id,
             'rented': datetime.now().isoformat(),
@@ -60,8 +63,8 @@ class WypozyczenieApiTests(TestCase):
         self.assertEqual(Rental.objects.count(), 1)
         self.assertEqual(Rental.objects.first().element, self.element)
 
-    def test_list_wypozyczenia(self):
-        """Test listing wypozyczenia"""
+    def test_list_rental(self):
+        """Pobranie listy wypożyczeń"""
         Rental.objects.create(
             user=self.user,
             costume=self.costume,
@@ -72,8 +75,8 @@ class WypozyczenieApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 1)
 
-    def test_retrieve_wypozyczenie(self):
-        """Test retrieving a single wypozyczenie"""
+    def test_retrieve_rental(self):
+        """Test pobrania szczegółów konkrentego wypożyczenia"""
         wyp = Rental.objects.create(
             user=self.user,
             costume=self.costume,
@@ -85,8 +88,8 @@ class WypozyczenieApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data['id'], wyp.id)
 
-    def test_update_wypozyczenie(self):
-        """Test updating a wypozyczenie"""
+    def test_update_rental(self):
+        """Zmiana danych wypożyczenia"""
         rental = Rental.objects.create(
             user=self.user,
             costume=self.costume,
@@ -98,10 +101,10 @@ class WypozyczenieApiTests(TestCase):
         res = self.client.patch(url, {'return_date': new_return_date.isoformat()}, format='json')
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         rental.refresh_from_db()
-        self.assertEqual(rental.zwrot.date(), new_return_date.date())
+        self.assertEqual(rental.return_date.date(), new_return_date.date())
 
-    def test_delete_wypozyczenie(self):
-        """Test deleting a wypozyczenie"""
+    def test_delete_rental(self):
+        """Usunięcie wypozyczenia"""
         rental = Rental.objects.create(
             user=self.user,
             costume=self.costume,

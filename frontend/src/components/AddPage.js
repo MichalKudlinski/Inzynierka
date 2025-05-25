@@ -338,8 +338,7 @@ const AddPage = () => {
     const token = localStorage.getItem("token");
     try {
       const res = await fetch(
-        `/api/costumes/${item.type === "element" ? "element" : "costume"}/${
-          item.id
+        `/api/costumes/${item.type === "element" ? "element" : "costume"}${item.id
         }/delete`,
         {
           method: "DELETE",
@@ -408,8 +407,8 @@ const AddPage = () => {
                     required
                     className={classes.formControl}
                   >
-                    <MenuItem value="male">Mężczyzna</MenuItem>
-                    <MenuItem value="female">Kobieta</MenuItem>
+                    <MenuItem value="male">Męski</MenuItem>
+                    <MenuItem value="female">Damski</MenuItem>
                     <MenuItem value="unisex">Unisex</MenuItem>
                   </TextField>
                   <TextField
@@ -421,9 +420,9 @@ const AddPage = () => {
                     onChange={handleChange}
                     className={classes.formControl}
                   >
-                    <MenuItem value="Small">Small</MenuItem>
-                    <MenuItem value="Medium">Medium</MenuItem>
-                    <MenuItem value="Large">Large</MenuItem>
+                    <MenuItem value="S">S</MenuItem>
+                    <MenuItem value="M">M</MenuItem>
+                    <MenuItem value="L">L</MenuItem>
                   </TextField>
 
                   <TextField

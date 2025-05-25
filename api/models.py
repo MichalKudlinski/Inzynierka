@@ -11,6 +11,7 @@ from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage, send_mail
 from django.db import models
+from django.utils import timezone
 from PIL import Image as PilImage
 from PIL import ImageDraw, ImageFont
 
@@ -237,6 +238,12 @@ class Costume(models.Model):
 
 
 
+from django.conf import settings
+from django.core.mail import send_mail
+from django.db import models
+from django.utils import timezone
+
+
 class Rental(models.Model):
     id = models.BigAutoField(primary_key=True)
 
@@ -246,72 +253,77 @@ class Rental(models.Model):
 
     rented = models.DateTimeField(auto_now_add=False)
     return_date = models.DateTimeField(blank=True, null=True)
-    reservation = models.BooleanField(default=False)  # Czy rezerwacja
+    reservation = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Wypozyczenie: {self.id} "
+        return f"Wypożyczenie: {self.id}"
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None
-        print(f"Saving Wypozyczenie instance: is_new={is_new}, ID={self.id}")
+        print(f"Saving Wypożyczenie instance: is_new={is_new}, ID={self.id}")
+
+
+        if timezone.is_naive(self.rented):
+            self.rented = timezone.make_aware(self.rented)
+        if self.return_date and timezone.is_naive(self.return_date):
+            self.return_date = timezone.make_aware(self.return_date)
 
         try:
-                # Call the superclass save method
             super().save(*args, **kwargs)
-            print(f"Wypozyczenie instance saved successfully: ID={self.id}")
+            print(f"Wypożyczenie instance saved successfully: ID={self.id}")
 
-            # Check if it's a new instance
             if is_new:
-
                 user_phone_number = None
                 city = None
 
                 if self.costume and self.costume.user:
                     user_phone_number = self.costume.user.phone_number
                     city = self.costume.city
-                elif self.elementu and self.element.user:
+                elif self.element and self.element.user:
                     city = self.element.city
                     user_phone_number = self.element.user.phone_number
-                rented = self.rented.strftime('%d-%m-%Y') if self.rented else 'Brak daty'
-                return_date = self.zwrot.strftime('%d-%m-%Y') if self.zwrot else 'Brak daty'
-                # Construct the email body
+
+                rented = timezone.localtime(self.rented).strftime('%d-%m-%Y') if self.rented else 'Brak daty'
+                return_date = timezone.localtime(self.return_date).strftime('%d-%m-%Y') if self.return_date else 'Brak daty'
+
                 name = self.element.name if self.element else self.costume.name
                 if not self.reservation:
-
-                    message = ( f"Cześć {self.user.name},\n\n"
-                              f"Ten email jest potwierdzeniem wypożyczenia : {name}\n."
-                              f"• Data rozpoczęcia wypożyczenia: {rented}\n"
-                              f"• Data zwrotu: {return_date}\n"
-                              f"• Miasto właściciela: {city}\n"
-                              f"• Numer właściciela: {user_phone_number if user_phone_number else 'Brak numeru telefonu właściciela'}\n"
-                              f"Sposób przekazania stroju i warunki jego wypożyczenia proszę ustalić bezpośrednio z właścicielem stroju / elementu stroju.\n\n"
-                              f"Pozdrawiamy,\nHeritageWear.pl" )
-
+                    message = (
+                        f"Cześć {self.user.name},\n\n"
+                        f"Ten email jest potwierdzeniem wypożyczenia : {name}\n"
+                        f"• Data rozpoczęcia wypożyczenia: {rented}\n"
+                        f"• Data zwrotu: {return_date}\n"
+                        f"• Miasto właściciela: {city}\n"
+                        f"• Numer właściciela: {user_phone_number if user_phone_number else 'Brak numeru telefonu właściciela'}\n"
+                        "Sposób przekazania stroju i warunki jego wypożyczenia proszę ustalić bezpośrednio z właścicielem stroju / elementu stroju.\n\n"
+                        "Pozdrawiamy,\nHeritageWear.pl"
+                    )
                 else:
-                    message = ( f"Cześć {self.user.name},\n\n"
-                                f"Ten email jest potwierdzeniem rezerwacji: {name}\n"
-                                f"• Data rozpoczęcia rezerwacji: {rented}\n"
-                                f"• Data zakończenia rezerwacji: {return_date}\n"
-                                f"• Miasto właściciela: {city}\n\n"
-                                "Masz 7 dni na potwierdzenie chęci wypożyczenia stroju w podanym terminie.\n"
-                                "Potwierdzenia rezerwcji możesz dokonać na stronie głównej heritage-wear.pl”.\n\n"
-                                "Pozdrawiamy,\n"
-                                "HeritageWear.pl"
-)
-                # Send confirmation email
+                    message = (
+                        f"Cześć {self.user.name},\n\n"
+                        f"Ten email jest potwierdzeniem rezerwacji: {name}\n"
+                        f"• Data rozpoczęcia rezerwacji: {rented}\n"
+                        f"• Data zakończenia rezerwacji: {return_date}\n"
+                        f"• Miasto właściciela: {city}\n\n"
+                        "Masz 7 dni na potwierdzenie chęci wypożyczenia stroju w podanym terminie.\n"
+                        "Potwierdzenia rezerwacji możesz dokonać na stronie głównej heritage-wear.pl.\n\n"
+                        "Pozdrawiamy,\n"
+                        "HeritageWear.pl"
+                    )
+
                 send_mail(
                     subject="Potwierdzenie Wypożyczenia",
                     message=message,
                     from_email="heritage.wear.kontakt@gmail.com",
-                    recipient_list=['michal.kudlinski@gmail.com'],  # This can be updated as needed
+                    recipient_list=['michal.kudlinski@gmail.com'],
                     fail_silently=False,
                 )
-                print(f"Email sent successfully for Wypozyczenie ID={self.id}")
+                print(f"Email sent successfully for Wypożyczenie ID={self.id}")
         except Exception as e:
-            print(f"Error occurred while saving Wypozyczenie ID={self.id}: {e}")
-    def delete(self, using=None, keep_parents=False):
+            print(f"Error occurred while saving Wypożyczenie ID={self.id}: {e}")
 
+    def delete(self, using=None, keep_parents=False):
         if self.costume and self.costume.user:
             element_name = self.costume.name
         elif self.element and self.element.user:
@@ -319,15 +331,14 @@ class Rental(models.Model):
         else:
             element_name = "nieznany przedmiot"
 
-        # Send to renter
         try:
             send_mail(
                 subject=f"Hej {self.user.name}, Twoje wypożyczenie zostało anulowane",
                 message=(
                     f"Cześć {self.user.name},\n\n"
                     f"Twoje wypożyczenie przedmiotu “{element_name}” (ID {self.id}) "
-                    f"od dnia {self.rented.strftime('%Y-%m-%d')} "
-                    f"do dnia {self.return_date.strftime('%Y-%m-%d')} zostało anulowane.\n\n"
+                    f"od dnia {timezone.localtime(self.rented).strftime('%Y-%m-%d')} "
+                    f"do dnia {timezone.localtime(self.return_date).strftime('%Y-%m-%d')} zostało anulowane.\n\n"
                     "Pozdrawiamy,\nHeritageWear.pl"
                 ),
                 from_email=settings.DEFAULT_FROM_EMAIL,
@@ -335,10 +346,7 @@ class Rental(models.Model):
             )
         except Exception as e:
             print(f"Failed to send cancellation email to renter {self.user.email}: {e}")
-            # if you want to abort the delete on e‑mail failure, uncomment:
-            # raise
 
-        # Send to owner
         owner = (self.costume or self.element).user
         try:
             send_mail(
@@ -347,8 +355,8 @@ class Rental(models.Model):
                     f"Cześć {owner.name},\n\n"
                     f"Użytkownik {self.user.name} ({self.user.email}) anulował wypożyczenie "
                     f"Twojego przedmiotu “{element_name}” (ID {self.id}).\n"
-                    f"Termin wypożyczenia: {self.rented.strftime('%Y-%m-%d')} "
-                    f"– {self.return_date.strftime('%Y-%m-%d')}.\n\n"
+                    f"Termin wypożyczenia: {timezone.localtime(self.rented).strftime('%Y-%m-%d')} "
+                    f"– {timezone.localtime(self.return_date).strftime('%Y-%m-%d')}.\n\n"
                     "Przedmiot jest teraz dostępny do ponownego wypożyczenia w tym czasie.\n\n"
                     "Pozdrawiamy,\nHeritageWear.pl"
                 ),
@@ -357,10 +365,9 @@ class Rental(models.Model):
             )
         except Exception as e:
             print(f"Failed to send cancellation email to owner {owner.email}: {e}")
-            # raise  # if you want to prevent delete on failure
 
-        # finally, delete the record
         super().delete(using=using, keep_parents=keep_parents)
+
 
 
 

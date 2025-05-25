@@ -1,6 +1,6 @@
 from django.urls import path
 
-from wypozyczenia import views
+from rentals import views
 
 urlpatterns = [
     path('create/', views.CreateRentalView.as_view(), name='rental-create'),

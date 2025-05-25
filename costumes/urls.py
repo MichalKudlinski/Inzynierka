@@ -1,6 +1,6 @@
 from django.urls import path, re_path
 
-from stroje import views
+from costumes import views
 
 urlpatterns = [
     path('element/create', views.CreateElementView.as_view() ,name = 'element-create'),

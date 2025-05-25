@@ -46,10 +46,9 @@ INSTALLED_APPS = [
     'user',
     'frontend.apps.FrontendConfig',
     'corsheaders',
-    'stroje',
-    'wypozyczenia',
-    'wiadomosci',
-    'django_crontab',
+    'costumes',
+    'rentals',
+    'news',
 ]
 
 MIDDLEWARE = [
