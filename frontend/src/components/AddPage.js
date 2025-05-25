@@ -338,7 +338,8 @@ const AddPage = () => {
     const token = localStorage.getItem("token");
     try {
       const res = await fetch(
-        `/api/costumes/${item.type === "element" ? "element" : "costume"}${item.id
+        `/api/costumes/${item.type === "element" ? "element" : "costume"}${
+          item.id
         }/delete`,
         {
           method: "DELETE",
@@ -394,6 +395,38 @@ const AddPage = () => {
                 onChange={handleChange}
                 className={classes.formControl}
               />
+              {addingOutfit && (
+                <>
+                  <TextField
+                    select
+                    fullWidth
+                    label="Płeć"
+                    name="gender"
+                    value={formData.gender}
+                    onChange={handleChange}
+                    required
+                    className={classes.formControl}
+                  >
+                    <MenuItem value="male">Męski</MenuItem>
+                    <MenuItem value="female">Damski</MenuItem>
+                    <MenuItem value="unisex">Unisex</MenuItem>
+                  </TextField>
+
+                  <TextField
+                    select
+                    fullWidth
+                    label="Rozmiar"
+                    name="size"
+                    value={formData.size}
+                    onChange={handleChange}
+                    className={classes.formControl}
+                  >
+                    <MenuItem value="S">S</MenuItem>
+                    <MenuItem value="M">M</MenuItem>
+                    <MenuItem value="L">L</MenuItem>
+                  </TextField>
+                </>
+              )}
 
               {!addingOutfit && (
                 <>
