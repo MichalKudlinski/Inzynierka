@@ -476,31 +476,32 @@ const AddPage = () => {
                       )
                     )}
                   </TextField>
+                  <div className={classes.fileInputWrapper}>
+                    <input
+                      accept="image/*"
+                      className={classes.hiddenInput}
+                      id="image-upload"
+                      type="file"
+                      name="image"
+                      onChange={handleChange}
+                    />
+                    <label htmlFor="image-upload">
+                      <Button
+                        variant="contained"
+                        component="span"
+                        className={classes.fileButton}
+                      >
+                        Wgraj zdjęcie
+                      </Button>
+                    </label>
+                    {formData.image && (
+                      <span style={{ marginLeft: 10 }}>
+                        {formData.image.name}
+                      </span>
+                    )}
+                  </div>
                 </>
               )}
-
-              <div className={classes.fileInputWrapper}>
-                <input
-                  accept="image/*"
-                  className={classes.hiddenInput}
-                  id="image-upload"
-                  type="file"
-                  name="image"
-                  onChange={handleChange}
-                />
-                <label htmlFor="image-upload">
-                  <Button
-                    variant="contained"
-                    component="span"
-                    className={classes.fileButton}
-                  >
-                    Wgraj zdjęcie
-                  </Button>
-                </label>
-                {formData.image && (
-                  <span style={{ marginLeft: 10 }}>{formData.image.name}</span>
-                )}
-              </div>
 
               {addingOutfit && (
                 <>
@@ -530,7 +531,32 @@ const AddPage = () => {
                   ))}
                 </>
               )}
-
+              {addingOutfit && (
+                <div className={classes.fileInputWrapper}>
+                  <input
+                    accept="image/*"
+                    className={classes.hiddenInput}
+                    id="image-upload"
+                    type="file"
+                    name="image"
+                    onChange={handleChange}
+                  />
+                  <label htmlFor="image-upload">
+                    <Button
+                      variant="contained"
+                      component="span"
+                      className={classes.fileButton}
+                    >
+                      Wgraj zdjęcie
+                    </Button>
+                  </label>
+                  {formData.image && (
+                    <span style={{ marginLeft: 10 }}>
+                      {formData.image.name}
+                    </span>
+                  )}
+                </div>
+              )}
               <Button
                 type="submit"
                 variant="contained"
