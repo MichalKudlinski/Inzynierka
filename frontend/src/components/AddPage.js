@@ -7,36 +7,37 @@ import {
   Paper,
   TextField,
   Typography,
-} from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+} from "@material-ui/core";
+import { makeStyles } from "@material-ui/core/styles";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    minHeight: '100vh',
-    maxHeight: '100vh',
-    backgroundColor: '#ffebcc',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
+    minHeight: "100vh",
+    maxHeight: "100vh",
+    backgroundColor: "#ffebcc",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
     paddingTop: theme.spacing(4),
     paddingBottom: theme.spacing(4),
-    overflowY: 'auto',
+    overflowY: "auto",
   },
   backButton: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     marginLeft: theme.spacing(3),
     marginBottom: theme.spacing(2),
-    backgroundColor: '#6b4c3b',
-    color: '#fff',
-    '&:hover': {
-      backgroundColor: '#4e3a2c',
+    backgroundColor: "#d9534f",
+    color: "#fff",
+    "&:hover": {
+      backgroundColor: "#c9302c",
     },
   },
+
   container: {
-    display: 'flex',
-    width: '100%',
+    display: "flex",
+    width: "100%",
     maxWidth: 1200,
     gap: theme.spacing(3),
   },
@@ -47,21 +48,21 @@ const useStyles = makeStyles((theme) => ({
   listWrapper: {
     width: 350,
     padding: theme.spacing(2),
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 20,
-    border: '3px solid #d4a373',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-    overflowY: 'auto',
-    maxHeight: '80vh',
+    border: "3px solid #d4a373",
+    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+    overflowY: "auto",
+    maxHeight: "80vh",
   },
   paper: {
     padding: theme.spacing(5),
     borderRadius: 20,
-    backgroundColor: '#fff',
-    width: '100%',
+    backgroundColor: "#fff",
+    width: "100%",
     maxWidth: 600,
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-    border: '3px solid #d4a373',
+    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+    border: "3px solid #d4a373",
     marginBottom: theme.spacing(4),
   },
   formControl: {
@@ -69,27 +70,27 @@ const useStyles = makeStyles((theme) => ({
   },
   fileInputWrapper: {
     marginTop: theme.spacing(3),
-    display: 'flex',
-    alignItems: 'center',
+    display: "flex",
+    alignItems: "center",
   },
   hiddenInput: {
-    display: 'none',
+    display: "none",
   },
   fileButton: {
-    backgroundColor: '#a52a2a',
-    color: '#fff',
-    padding: '10px 20px',
-    '&:hover': {
-      backgroundColor: '#872222',
+    backgroundColor: "#a52a2a",
+    color: "#fff",
+    padding: "10px 20px",
+    "&:hover": {
+      backgroundColor: "#872222",
     },
   },
   submitButton: {
     marginTop: theme.spacing(4),
-    backgroundColor: '#a52a2a',
-    color: '#fff',
-    padding: '12px 25px',
-    '&:hover': {
-      backgroundColor: '#872222',
+    backgroundColor: "#51991d",
+    color: "#fff",
+    padding: "12px 25px",
+    "&:hover": {
+      backgroundColor: "#294d0f",
     },
   },
   errorText: {
@@ -98,7 +99,7 @@ const useStyles = makeStyles((theme) => ({
   },
   loadingWrapper: {
     marginTop: theme.spacing(6),
-    textAlign: 'center',
+    textAlign: "center",
   },
   card: {
     marginBottom: 12,
@@ -106,22 +107,22 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const elementTypeMapping = {
-  headwear: 'Nakrycie głowy',
-  shirt: 'Koszula',
-  trousers: 'Spodnie',
-  vest: 'Kamizelka',
-  shoes: 'Buty',
-  accessories: 'Akcesoria',
-  jewelry: 'Biżuteria',
-  petticoat: 'Haleczka',
-  dress: 'Suknia',
+  headwear: "Nakrycie głowy",
+  shirt: "Koszula",
+  trousers: "Spodnie",
+  vest: "Kamizelka",
+  shoes: "Buty",
+  accessories: "Akcesoria",
+  jewelry: "Biżuteria",
+  petticoat: "Haleczka",
+  dress: "Suknia",
 };
 
 const AddPage = () => {
   const classes = useStyles();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState("");
   const [user, setUser] = useState(null);
   const [stroje, setStroje] = useState([]);
   const [elementStroje, setElementStroje] = useState([]);
@@ -129,59 +130,60 @@ const AddPage = () => {
   const [addingOutfit, setAddingOutfit] = useState(false);
 
   const initialFormData = {
-    name: '',
-    city: '',
-    description: '',
-    gender: '',
-    size: '',
-    element_type: '',
+    name: "",
+    city: "",
+    description: "",
+    gender: "",
+    size: "",
+    element_type: "",
     image: null,
-    headwear: '',
-    shirt: '',
-    trousers: '',
-    vest: '',
-    shoes: '',
-    accessories: '',
-    jewelry: '',
-    petticoat: '',
-    dress: '',
+    headwear: "",
+    shirt: "",
+    trousers: "",
+    vest: "",
+    shoes: "",
+    accessories: "",
+    jewelry: "",
+    petticoat: "",
+    dress: "",
   };
 
   const [formData, setFormData] = useState(initialFormData);
 
   const fetchUserAndItems = async () => {
     setLoading(true);
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (!token) {
-      setErrorMessage('Brak tokenu użytkownika.');
-      navigate('/login');
+      setErrorMessage("Brak tokenu użytkownika.");
+      navigate("/login");
       return;
     }
     try {
       const headers = {
         Authorization: `Token ${token}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       };
 
-      const userRes = await fetch('/api/user/me', { headers });
-      if (!userRes.ok) throw new Error('Nie udało się pobrać danych użytkownika.');
+      const userRes = await fetch("/api/user/me", { headers });
+      if (!userRes.ok)
+        throw new Error("Nie udało się pobrać danych użytkownika.");
       const userData = await userRes.json();
 
       if (!userData?.id || !userData?.is_renter) {
-        setErrorMessage('Nie masz uprawnień do dodawania elementów.');
-        navigate('/');
+        setErrorMessage("Nie masz uprawnień do dodawania elementów.");
+        navigate("/");
         return;
       }
 
       setUser(userData);
 
       const [strojeRes, elementStrojeRes] = await Promise.all([
-        fetch('/api/costumes/costume/list', { headers }),
-        fetch('/api/costumes/element/list', { headers }),
+        fetch("/api/costumes/costume/list", { headers }),
+        fetch("/api/costumes/element/list", { headers }),
       ]);
 
       if (!strojeRes.ok || !elementStrojeRes.ok) {
-        throw new Error('Błąd podczas pobierania danych.');
+        throw new Error("Błąd podczas pobierania danych.");
       }
 
       const strojeData = await strojeRes.json();
@@ -211,7 +213,7 @@ const AddPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     const form = new FormData();
 
     try {
@@ -219,34 +221,34 @@ const AddPage = () => {
         Object.entries(formData).forEach(([key, value]) => {
           if (value !== null) form.append(key, value);
         });
-        form.append('user', user.id);
+        form.append("user", user.id);
 
-        const res = await fetch('/api/costumes/costume/create', {
-          method: 'POST',
+        const res = await fetch("/api/costumes/costume/create", {
+          method: "POST",
           headers: { Authorization: `Token ${token}` },
           body: form,
         });
 
-        if (!res.ok) throw new Error('Nie udało się dodać stroju.');
+        if (!res.ok) throw new Error("Nie udało się dodać stroju.");
 
-        alert('Stroje zostały dodane.');
+        alert("Stroje zostały dodane.");
       } else {
         Object.entries(formData).forEach(([key, value]) => {
           if (value !== null && !elementTypeMapping[key]) {
             form.append(key, value);
           }
         });
-        form.append('user', user.id);
+        form.append("user", user.id);
 
-        const res = await fetch('/api/costumes/element/create', {
-          method: 'POST',
+        const res = await fetch("/api/costumes/element/create", {
+          method: "POST",
           headers: { Authorization: `Token ${token}` },
           body: form,
         });
 
-        if (!res.ok) throw new Error('Nie udało się dodać elementu.');
+        if (!res.ok) throw new Error("Nie udało się dodać elementu.");
 
-        alert('Element został dodany.');
+        alert("Element został dodany.");
       }
       setFormData(initialFormData);
       await fetchUserAndItems();
@@ -257,14 +259,13 @@ const AddPage = () => {
     }
   };
 
-
   const renderItems = (title, items) => {
-    const isElement = title.toLowerCase().includes('element');
+    const isElement = title.toLowerCase().includes("element");
 
     if (items.length === 0) {
       return (
-        <Typography variant="body1" style={{ textAlign: 'center' }}>
-          Brak {isElement ? 'elementów' : 'strojów'}
+        <Typography variant="body1" style={{ textAlign: "center" }}>
+          Brak {isElement ? "elementów" : "strojów"}
         </Typography>
       );
     }
@@ -274,7 +275,7 @@ const AddPage = () => {
 
       const cardStyle = {
         marginBottom: 15,
-        backgroundColor: isApproved ? '#e6ffe6' : '#f0f0f0',
+        backgroundColor: isApproved ? "#e6ffe6" : "#f0f0f0",
         borderRadius: 8,
         opacity: isApproved ? 1 : 0.6,
       };
@@ -289,7 +290,7 @@ const AddPage = () => {
             {!isApproved && (
               <Typography
                 variant="body2"
-                style={{ color: '#999', fontStyle: 'italic', marginBottom: 10 }}
+                style={{ color: "#999", fontStyle: "italic", marginBottom: 10 }}
               >
                 Oczekuje na zatwierdzenie
               </Typography>
@@ -299,7 +300,9 @@ const AddPage = () => {
               color="primary"
               style={{ marginTop: 10, marginRight: 10 }}
               onClick={() =>
-                navigate(`/details/${isElement ? 'element' : 'costume'}/${item.id}`)
+                navigate(
+                  `/details/${isElement ? "element" : "costume"}/${item.id}`
+                )
               }
               disabled={!isApproved}
             >
@@ -310,7 +313,10 @@ const AddPage = () => {
               color="secondary"
               style={{ marginTop: 10 }}
               onClick={() =>
-                openDeleteConfirmation({ ...item, type: isElement ? 'element' : 'costume' })
+                openDeleteConfirmation({
+                  ...item,
+                  type: isElement ? "element" : "costume",
+                })
               }
               disabled={!isApproved}
             >
@@ -322,7 +328,6 @@ const AddPage = () => {
     });
   };
 
-
   const openDeleteConfirmation = (item) => {
     if (window.confirm(`Czy na pewno chcesz usunąć "${item.name}"?`)) {
       deleteItem(item);
@@ -330,17 +335,19 @@ const AddPage = () => {
   };
 
   const deleteItem = async (item) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     try {
       const res = await fetch(
-        `/api/costumes/${item.type === 'element' ? 'element' : 'costume'}/${item.id}/delete`,
+        `/api/costumes/${item.type === "element" ? "element" : "costume"}/${
+          item.id
+        }/delete`,
         {
-          method: 'DELETE',
+          method: "DELETE",
           headers: { Authorization: `Token ${token}` },
         }
       );
       if (!res.ok) {
-        throw new Error('Usunięcie nie powiodło się');
+        throw new Error("Usunięcie nie powiodło się");
       }
       alert(`"${item.name}" został usunięty.`);
       await fetchUserAndItems();
@@ -351,14 +358,14 @@ const AddPage = () => {
 
   return (
     <div className={classes.root}>
-      <Button className={classes.backButton} onClick={() => navigate('/main')}>
-        Powrót
+      <Button className={classes.backButton} onClick={() => navigate("/main")}>
+        Wróć
       </Button>
       <div className={classes.container}>
         <div className={classes.formWrapper}>
           <Paper className={classes.paper} elevation={3}>
             <Typography variant="h5" gutterBottom>
-              {addingOutfit ? 'Dodaj strój' : 'Dodaj element kostiumu'}
+              {addingOutfit ? "Dodaj strój" : "Dodaj element stroju"}
             </Typography>
             <form onSubmit={handleSubmit} noValidate>
               <TextField
@@ -406,13 +413,19 @@ const AddPage = () => {
                     <MenuItem value="unisex">Unisex</MenuItem>
                   </TextField>
                   <TextField
+                    select
                     fullWidth
                     label="Rozmiar"
                     name="size"
                     value={formData.size}
                     onChange={handleChange}
                     className={classes.formControl}
-                  />
+                  >
+                    <MenuItem value="Small">Small</MenuItem>
+                    <MenuItem value="Medium">Medium</MenuItem>
+                    <MenuItem value="Large">Large</MenuItem>
+                  </TextField>
+
                   <TextField
                     select
                     fullWidth
@@ -423,38 +436,18 @@ const AddPage = () => {
                     required
                     className={classes.formControl}
                   >
-                    {Object.entries(elementTypeMapping).map(([value, label]) => (
-                      <MenuItem key={value} value={value}>
-                        {label}
-                      </MenuItem>
-                    ))}
+                    {Object.entries(elementTypeMapping).map(
+                      ([value, label]) => (
+                        <MenuItem key={value} value={value}>
+                          {label}
+                        </MenuItem>
+                      )
+                    )}
                   </TextField>
                 </>
               )}
 
               <div className={classes.fileInputWrapper}>
-                <TextField
-                  select
-                  fullWidth
-                  label="Płeć"
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleChange}
-                  required
-                  className={classes.formControl}
-                >
-                  <MenuItem value="male">Mężczyzna</MenuItem>
-                  <MenuItem value="female">Kobieta</MenuItem>
-                  <MenuItem value="unisex">Unisex</MenuItem>
-                </TextField>
-                <TextField
-                  fullWidth
-                  label="Rozmiar"
-                  name="size"
-                  value={formData.size}
-                  onChange={handleChange}
-                  className={classes.formControl}
-                />
                 <input
                   accept="image/*"
                   className={classes.hiddenInput}
@@ -515,7 +508,7 @@ const AddPage = () => {
                 {submitting ? (
                   <CircularProgress size={24} color="inherit" />
                 ) : (
-                  'Zatwierdź'
+                  "Zatwierdź"
                 )}
               </Button>
             </form>
@@ -525,17 +518,21 @@ const AddPage = () => {
               variant="outlined"
               onClick={() => setAddingOutfit((prev) => !prev)}
             >
-              {addingOutfit ? 'Dodaj element zamiast tego' : 'Dodaj strój zamiast tego'}
+              {addingOutfit
+                ? "Dodaj element zamiast tego"
+                : "Dodaj strój zamiast tego"}
             </Button>
 
             {errorMessage && (
-              <Typography className={classes.errorText}>{errorMessage}</Typography>
+              <Typography className={classes.errorText}>
+                {errorMessage}
+              </Typography>
             )}
           </Paper>
         </div>
 
         <div className={classes.listWrapper}>
-          <Typography variant="h6" gutterBottom style={{ textAlign: 'center' }}>
+          <Typography variant="h6" gutterBottom style={{ textAlign: "center" }}>
             Twoje elementy
           </Typography>
           {loading ? (
@@ -543,13 +540,13 @@ const AddPage = () => {
               <CircularProgress />
             </div>
           ) : (
-            renderItems('Elements', elementStroje)
+            renderItems("Elements", elementStroje)
           )}
 
           <Typography
             variant="h6"
             gutterBottom
-            style={{ marginTop: 20, textAlign: 'center' }}
+            style={{ marginTop: 20, textAlign: "center" }}
           >
             Twoje stroje
           </Typography>
@@ -558,13 +555,12 @@ const AddPage = () => {
               <CircularProgress />
             </div>
           ) : (
-            renderItems('Outfits', stroje)
+            renderItems("Outfits", stroje)
           )}
         </div>
       </div>
     </div>
   );
-
 };
 
 export default AddPage;

@@ -91,12 +91,14 @@ const HomePage = () => {
         </Typography>
       </div>
 
-      <div style={{
-        gridArea: "signup",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}>
+      <div
+        style={{
+          gridArea: "signup",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <HoverButton
           text="Załóż konto"
           bgColor="#d9534f"
@@ -105,12 +107,14 @@ const HomePage = () => {
         />
       </div>
 
-      <div style={{
-        gridArea: "login",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}>
+      <div
+        style={{
+          gridArea: "login",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <HoverButton
           text="Zaloguj"
           bgColor="#337ab7"
@@ -155,8 +159,8 @@ const HomePage = () => {
               <li
                 key={msg.id}
                 style={{
-                  marginBottom: "12px",    // <-- add space here
-                  lineHeight: 1.5,        // optional: improve readability
+                  marginBottom: "12px",
+                  lineHeight: 1.5,
                 }}
               >
                 <strong>{msg.name}</strong> — {msg.text}
@@ -181,7 +185,6 @@ const HomePage = () => {
     </div>
   );
 };
-
 
 const HoverButton = ({ text, bgColor, hoverColor, onClick }) => {
   const [hover, setHover] = useState(false);

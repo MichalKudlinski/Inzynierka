@@ -56,7 +56,7 @@ class MainPage extends Component {
         this.setState({ user });
 
         if (user.is_renter) {
-          this.handleSendReminders(); // <-- Call send_reminders API here
+          // this.handleSendReminders(); // <-- Call send_reminders API here
           this.fetchRenterData(headers);
         } else {
           this.fetchNonRenterData(headers, user.id);
@@ -447,6 +447,8 @@ class MainPage extends Component {
       <Typography variant="body1" style={{ textAlign: "center" }}>
         {title === "Rezerwacje"
           ? "Brak rezerwacji"
+          : title === "Wypożyczenia"
+          ? "Brak wypożyczeń"
           : `Brak ${title.toLowerCase()}`}
       </Typography>
     ) : (
@@ -563,7 +565,11 @@ class MainPage extends Component {
 
     return items.length === 0 ? (
       <Typography variant="body1" style={{ textAlign: "center" }}>
-        Brak {title.toLowerCase()}
+        {title === "stroje"
+          ? "Brak strojów"
+          : title === "elementy stroju"
+          ? "Brak elementów stroju"
+          : `Brak ${title.toLowerCase()}`}
       </Typography>
     ) : (
       items.map((item) => {
@@ -716,18 +722,42 @@ class MainPage extends Component {
           ) : (
             <Typography>Ładowanie...</Typography>
           )}
-          <Button
-            variant="contained"
-            onClick={this.handleLogout}
+          <div
             style={{
-              backgroundColor: "#d9534f",
-              color: "#fff",
-              marginTop: "20px",
-              borderRadius: "12px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
             }}
           >
-            Wyloguj się
-          </Button>
+            <Button
+              variant="contained"
+              onClick={this.handleLogout}
+              style={{
+                backgroundColor: "#d9534f",
+                color: "#fff",
+                marginTop: "20px",
+                borderRadius: "12px",
+              }}
+            >
+              Wyloguj się
+            </Button>
+            {this.state.user?.is_renter && (
+              <Button
+                variant="contained"
+                color="primary"
+                style={{
+                  backgroundColor: "#4f56d9",
+                  color: "#fff",
+                  marginTop: "20px",
+                  marginLeft: "10px",
+                  borderRadius: "12px",
+                }}
+                onClick={() => navigate("/add")}
+              >
+                Dodaj nowy przedmiot
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Rentals and Reservations */}
@@ -822,16 +852,6 @@ class MainPage extends Component {
               Przeglądaj dostępne stroje
             </Button>
           </div>
-        )}
-        {this.state.user?.is_renter && (
-          <Button
-            variant="contained"
-            color="primary"
-            style={{ marginBottom: "20px" }}
-            onClick={() => navigate("/add")}
-          >
-            Dodaj nowy przedmiot
-          </Button>
         )}
 
         {/* Delete confirmation dialog */}
