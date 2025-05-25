@@ -317,7 +317,7 @@ export default function SignUpPage() {
               color="primary"
             />
           }
-          label="Chcę zostać wynajmującym"
+          label="Chcę wynajmować własne stroje innym"
           style={{ marginBottom: "20px" }}
         />
         {isRenter && (

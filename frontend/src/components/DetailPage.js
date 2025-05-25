@@ -300,44 +300,46 @@ const DetailPage = () => {
                   />
                 )}
 
-                {!isRenter && (
-                  <div style={{ marginTop: 30 }}>
-                    <Button
-                      onClick={handleRental}
-                      variant="contained"
-                      style={{
-                        marginTop: "10px",
-                        backgroundColor: "#a52a2a",
-                        color: "#fff",
-                      }}
-                    >
-                      Wypożycz
-                    </Button>
-                    <Button
-                      onClick={handleReservation}
-                      variant="contained"
-                      style={{
-                        marginTop: "10px",
-                        backgroundColor: "#337ab7",
-                        color: "#fff",
-                      }}
-                    >
-                      Rezerwuj
-                    </Button>
-                    <Button
-                      onClick={() => navigate(-1)}
-                      variant="outlined"
-                      style={{
-                        marginTop: "10px",
-                        marginLeft: "500px",
-                        backgroundColor: "#d9534f",
-                        color: "#fff",
-                      }}
-                    >
-                      Wróć
-                    </Button>
-                  </div>
-                )}
+                <div style={{ marginTop: 30 }}>
+                  {!isRenter && (
+                    <>
+                      <Button
+                        onClick={handleRental}
+                        variant="contained"
+                        style={{
+                          marginTop: "10px",
+                          backgroundColor: "#a52a2a",
+                          color: "#fff",
+                        }}
+                      >
+                        Wypożycz
+                      </Button>
+                      <Button
+                        onClick={handleReservation}
+                        variant="contained"
+                        style={{
+                          marginTop: "10px",
+                          backgroundColor: "#337ab7",
+                          color: "#fff",
+                        }}
+                      >
+                        Rezerwuj
+                      </Button>
+                    </>
+                  )}
+                  <Button
+                    onClick={() => navigate(-1)}
+                    variant="outlined"
+                    style={{
+                      marginTop: "10px",
+                      marginLeft: "20px",
+                      backgroundColor: "#d9534f",
+                      color: "#fff",
+                    }}
+                  >
+                    Wróć
+                  </Button>
+                </div>
               </>
             )}
           </Paper>

@@ -520,7 +520,7 @@ class MainPage extends Component {
                 style={{ marginTop: "10px" }}
                 onClick={() => this.openDeleteConfirmation(item)}
               >
-                Usuń
+                Anuluj
               </Button>
 
               <Button
@@ -529,7 +529,7 @@ class MainPage extends Component {
                 style={{ marginTop: "10px", marginLeft: "10px" }}
                 onClick={() => this.openExtendDialog(item)}
               >
-                Wydłuż
+                Przedłuż
               </Button>
               {item.reservation && (
                 <Button
@@ -884,9 +884,9 @@ class MainPage extends Component {
           open={extendDialogOpen}
           onClose={() => this.setState({ extendDialogOpen: false })}
         >
-          <DialogTitle>Wydłuż wypożyczenie</DialogTitle>
+          <DialogTitle>Przedłuż wypożyczenie</DialogTitle>
           <DialogContent>
-            <Typography>Na ile dni chcesz wydłużyć?</Typography>
+            <Typography>Na ile dni chcesz przedłużyć?</Typography>
             <input
               type="number"
               min="1"
