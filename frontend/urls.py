@@ -1,14 +1,22 @@
-from django.urls import path, re_path
+from django.urls import path
 
 from .views import index
 
 urlpatterns = [
-    path("", index),
-    path("signup", index),
-    path("login", index),
-    path("main", index),
-    path("rentals", index),
-    path("details", index),
-    path("details/<str:type>/<int:id>", index),
-    path("add",index),
-]
+        #początkowa
+        path("", index),
+        #rejestracja
+        path("signup", index),
+        #logowanie
+        path("login", index),
+        #główna
+        path("main", index),
+        #wypożyczenia
+        path("rentals", index),
+        #szczegóły
+        path("details/<str:type>/<int:id>", index),
+        #dodawanie
+        path("add",index),
+    ]
+
+

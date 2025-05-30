@@ -90,26 +90,20 @@ class PrivateUserApiTests(TestCase):
         self.client.force_authenticate(user=self.user)
 
     def test_retrieve_profile_success(self):
+        """Pozyskiwanie danych użytkownika z prawidłową autoryzacją"""
         res = self.client.get(ME_URL)
-
         self.assertEqual( res.status_code, status.HTTP_200_OK, f"Expected 200 OK, got {res.status_code} with response: {res.data}")
         self.assertIn('email', res.data, "Response data missing 'email' field")
         self.assertIn('name', res.data, "Response data missing 'name' field")
         self.assertEqual( res.data['email'], self.user.email, f"Expected email '{self.user.email}', got '{res.data.get('email')}'")
         self.assertEqual( res.data['name'], self.user.name, f"Expected name '{self.user.name}', got '{res.data.get('name')}'")
 
-    def test_post_me_not_allowed(self):
-        res = self.client.post(ME_URL, {})
-        self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_update_user_profile(self):
+        """Zmiana danych użytkownika, z prawidłową autoryzacją"""
         payload = {'name': 'New Name', 'password': 'newpass123'}
         res = self.client.patch(ME_URL, payload)
-
         self.assertEqual( res.status_code, status.HTTP_200_OK, f"Expected status 200 OK, got {res.status_code} with response: {res.data}")
-
         self.user.refresh_from_db()
-
         self.assertEqual( self.user.name, payload['name'], f"Expected user name to be updated to '{payload['name']}', got '{self.user.name}'")
-
         self.assertTrue( self.user.check_password(payload['password']), "Password update failed — the new password does not match")

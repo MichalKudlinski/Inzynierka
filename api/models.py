@@ -65,13 +65,9 @@ class User(AbstractBaseUser, PermissionsMixin):
             if  self.is_renter and is_new:
                 subject = "Dziękujemy za rejestrację!"
                 message =( f"Hej {self.name}, dziekujemy za rejestrację w naszym serwisie!\n\n"
-                f"Instrukcja dodawania swoich strojów, umożliwiając tym samym ich wypożyczenie innym użytkownikom:\n\n" \
-                f"1. W szablonie pliku excel znajdującym się w załączniku proszę wypełnić dane na temat strojów i poszczególnych elementów\n" \
-                f"2. Wypełnione pliki excel proszę o odesłanie na mail: heritage_wear@gmail.com wraz ze zdjęciami poszczególnych\n" \
-                f"części garderoby, nazwy plików zdjęć powinny odpowiadać nazwom produktów zawartych w plikach excel.\n\n"
                 f"Pozdrawiamy,\nHeritageWear.pl " )
                 from_email = "heritage.wear.kontakt@gmail.com"
-                recipient_list = ['michal.kudlinski@gmail.com']
+                recipient_list = [self.email]
                 email = EmailMessage(subject, message, from_email, recipient_list)
 
 
@@ -133,7 +129,7 @@ class Element(models.Model):
                 "Pozdrawiamy,\nHeritageWear.pl"
             )
             from_email = "heritage.wear.kontakt@gmail.com"
-            recipient_list = ["michal.kudlinski@gmail.com"]
+            recipient_list = [self.user.email]
 
             try:
                 generated_img = PilImage.new("RGB", (600, 200), color=(255, 255, 255))
@@ -212,7 +208,7 @@ class Costume(models.Model):
                 "Pozdrawiamy,\nHeritageWear.pl"
             )
             from_email = "heritage.wear.kontakt@gmail.com"
-            recipient_list = ["michal.kudlinski@gmail.com"]
+            recipient_list = [self.user.email]
 
             try:
                 #Tworzenie pliku jpg z extid
@@ -316,7 +312,7 @@ class Rental(models.Model):
                     subject="Potwierdzenie Wypożyczenia",
                     message=message,
                     from_email="heritage.wear.kontakt@gmail.com",
-                    recipient_list=['michal.kudlinski@gmail.com'],
+                    recipient_list=[self.user.email],
                     fail_silently=False,
                 )
                 print(f"Email sent successfully for Wypożyczenie ID={self.id}")
@@ -361,7 +357,7 @@ class Rental(models.Model):
                     "Pozdrawiamy,\nHeritageWear.pl"
                 ),
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=["michal.kudlinski@gmail.com"],
+                recipient_list=[owner.email],
             )
         except Exception as e:
             print(f"Failed to send cancellation email to owner {owner.email}: {e}")

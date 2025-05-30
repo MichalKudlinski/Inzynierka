@@ -17,17 +17,9 @@ class TestNewsApi(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(
-            email='user@example.com',
-            password='testpass123',
-            name='Test User'
-        )
+        self.user = User.objects.create_user(email='user@example.com', password='testpass123', name='Test User')
         self.client.force_authenticate(user=self.user)
-
-        self.news = News.objects.create(
-            name='Initial News',
-            text='This is a test news item.'
-        )
+        self.news = News.objects.create(name='Initial News', text='This is a test news item.')
 
     def test_create_news(self):
         """Tworzenie wiadomości"""

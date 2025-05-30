@@ -19,19 +19,26 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
-from rentals import views
-
 urlpatterns = [
+    #URL panelu administratora
     path('admin/', admin.site.urls),
+    #URL pobrane z komponentu api
     path('api/', include('api.urls')),
+    #URL schematu OpenAPI
     path('api/schema',SpectacularAPIView.as_view(), name='api_schema'),
+    #URL dokumentacji schematu OpenAPI
     path('api/docs/', SpectacularSwaggerView.as_view(url_name = 'api_schema'), name = 'api_docs'),
+    #URL pobrane z komponentu user
     path('api/user/', include('user.urls')),
+    #URL pobrane z komponentu costumes
     path('api/costumes/',include('costumes.urls')),
+    #URL pobrane z komponentu rentals
     path('api/rentals/',include('rentals.urls')),
+    #URL pobrane z komponentu news
     path('api/news/', include('news.urls')),
+    #URL pobrane z komponentu frontend
     path('',include('frontend.urls')),
 
 ]
-
+#Dodanie ścieżek URL dla plików statycznych i multimedialnych
 urlpatterns += static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)
