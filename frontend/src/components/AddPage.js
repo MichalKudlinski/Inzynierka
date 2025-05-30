@@ -338,7 +338,8 @@ const AddPage = () => {
     const token = localStorage.getItem("token");
     try {
       const res = await fetch(
-        `/api/costumes/${item.type === "element" ? "element" : "costume"}${item.id
+        `/api/costumes/${item.type === "element" ? "element" : "costume"}${
+          item.id
         }/delete`,
         {
           method: "DELETE",
@@ -394,6 +395,38 @@ const AddPage = () => {
                 onChange={handleChange}
                 className={classes.formControl}
               />
+              {addingOutfit && (
+                <>
+                  <TextField
+                    select
+                    fullWidth
+                    label="Płeć"
+                    name="gender"
+                    value={formData.gender}
+                    onChange={handleChange}
+                    required
+                    className={classes.formControl}
+                  >
+                    <MenuItem value="male">Męski</MenuItem>
+                    <MenuItem value="female">Damski</MenuItem>
+                    <MenuItem value="unisex">Unisex</MenuItem>
+                  </TextField>
+
+                  <TextField
+                    select
+                    fullWidth
+                    label="Rozmiar"
+                    name="size"
+                    value={formData.size}
+                    onChange={handleChange}
+                    className={classes.formControl}
+                  >
+                    <MenuItem value="S">S</MenuItem>
+                    <MenuItem value="M">M</MenuItem>
+                    <MenuItem value="L">L</MenuItem>
+                  </TextField>
+                </>
+              )}
 
               {!addingOutfit && (
                 <>
@@ -443,31 +476,32 @@ const AddPage = () => {
                       )
                     )}
                   </TextField>
+                  <div className={classes.fileInputWrapper}>
+                    <input
+                      accept="image/*"
+                      className={classes.hiddenInput}
+                      id="image-upload"
+                      type="file"
+                      name="image"
+                      onChange={handleChange}
+                    />
+                    <label htmlFor="image-upload">
+                      <Button
+                        variant="contained"
+                        component="span"
+                        className={classes.fileButton}
+                      >
+                        Wgraj zdjęcie
+                      </Button>
+                    </label>
+                    {formData.image && (
+                      <span style={{ marginLeft: 10 }}>
+                        {formData.image.name}
+                      </span>
+                    )}
+                  </div>
                 </>
               )}
-
-              <div className={classes.fileInputWrapper}>
-                <input
-                  accept="image/*"
-                  className={classes.hiddenInput}
-                  id="image-upload"
-                  type="file"
-                  name="image"
-                  onChange={handleChange}
-                />
-                <label htmlFor="image-upload">
-                  <Button
-                    variant="contained"
-                    component="span"
-                    className={classes.fileButton}
-                  >
-                    Wgraj zdjęcie
-                  </Button>
-                </label>
-                {formData.image && (
-                  <span style={{ marginLeft: 10 }}>{formData.image.name}</span>
-                )}
-              </div>
 
               {addingOutfit && (
                 <>
@@ -497,7 +531,32 @@ const AddPage = () => {
                   ))}
                 </>
               )}
-
+              {addingOutfit && (
+                <div className={classes.fileInputWrapper}>
+                  <input
+                    accept="image/*"
+                    className={classes.hiddenInput}
+                    id="image-upload"
+                    type="file"
+                    name="image"
+                    onChange={handleChange}
+                  />
+                  <label htmlFor="image-upload">
+                    <Button
+                      variant="contained"
+                      component="span"
+                      className={classes.fileButton}
+                    >
+                      Wgraj zdjęcie
+                    </Button>
+                  </label>
+                  {formData.image && (
+                    <span style={{ marginLeft: 10 }}>
+                      {formData.image.name}
+                    </span>
+                  )}
+                </div>
+              )}
               <Button
                 type="submit"
                 variant="contained"
